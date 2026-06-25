@@ -6,7 +6,7 @@ import {
   loadOrders, 
   saveOrders, 
   addStatusLog, 
-  ACCOUNTS, 
+  loadAccounts, 
   loadProducts, 
   loadCategories 
 } from "../utils/storage";
@@ -55,7 +55,7 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanPhone = phone.trim();
-    const account = ACCOUNTS.find(a => a.phone === cleanPhone && a.password === password);
+    const account = loadAccounts().find(a => a.phone === cleanPhone && a.password === password);
     
     if (account && (account.role === "KITCHEN" || account.role === "ADMIN")) {
       setIsLoggedIn(true);
@@ -202,9 +202,7 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
           </button>
         </form>
 
-        <p className="text-[10px] text-center text-[#394013]/60 italic font-medium">
-          * Thông tin tài khoản mặc định được cấu hình sẵn trong mã nguồn.
-        </p>
+        {/* Account info hidden for security */}
 
         <div className="text-center pt-2">
           <button

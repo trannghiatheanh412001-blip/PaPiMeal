@@ -27,9 +27,7 @@ import {
   generateOrderCode, 
   addStatusLog, 
   loadOrders, 
-  saveOrders, 
-  SHOP_ADDRESS, 
-  SHOP_PHONE 
+  saveOrders
 } from "../utils/storage";
 import { sendToGoogleSheets } from "../utils/googleSheets";
 import { loadTextConfig } from "../utils/textConfig";
@@ -358,14 +356,14 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
             onClick={handleStartOrder}
             className="w-full py-4 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-bold rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2 cursor-pointer text-base"
           >
-            Đặt Món Ngay <ArrowRight size={20} />
+            {textConfig.startOrderBtn} <ArrowRight size={20} />
           </motion.button>
 
           <button
             onClick={onBackToHome}
             className="mt-4 text-xs font-semibold text-[#00523b] hover:underline cursor-pointer"
           >
-            Quay lại trang chủ
+            {textConfig.homeBackBtn}
           </button>
         </div>
       )}
@@ -505,8 +503,8 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
                 >
                   <span className="font-bold text-[#00523b] block mb-0.5">📍 Địa chỉ bếp PaPiMeal:</span>
                   <p className="text-[#394013]/80 leading-relaxed font-medium">
-                    {SHOP_ADDRESS} <br />
-                    📞 Điện thoại: <a href={`tel:${SHOP_PHONE.replace(/\s/g, '')}`} className="font-bold underline hover:text-[#00523b]">{SHOP_PHONE}</a>
+                    {textConfig.shopAddress} <br />
+                    📞 Điện thoại: <a href={`tel:${textConfig.shopPhone.replace(/\s/g, '')}`} className="font-bold underline hover:text-[#00523b]">{textConfig.shopPhone}</a>
                   </p>
                 </motion.div>
               )}
@@ -598,6 +596,11 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
           animate={{ opacity: 1 }}
           className="space-y-4 pb-20"
         >
+          <div>
+            <h3 className="text-base font-black text-[#00523b] font-sans leading-tight">{textConfig.step2Title}</h3>
+            <p className="text-[10px] text-[#394013]/60 font-medium leading-normal mt-0.5">{textConfig.step2Sub}</p>
+          </div>
+
           {/* Progress Header */}
           <div className="bg-[#00523b] text-[#fffbd8] px-4 py-3 rounded-2xl shadow-sm flex items-center justify-between">
             <div className="flex flex-col">
@@ -778,9 +781,14 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
-          <h3 className="text-lg font-bold text-[#00523b] font-sans border-b border-[#00523b]/10 pb-2">
-            🧾 Hóa Đơn Tạm Tính
-          </h3>
+          <div className="border-b border-[#00523b]/10 pb-2">
+            <h3 className="text-lg font-black text-[#00523b] font-sans leading-tight">
+              {textConfig.confirmTitle}
+            </h3>
+            <p className="text-[10px] text-[#394013]/60 font-medium mt-0.5">
+              {textConfig.confirmSub}
+            </p>
+          </div>
 
           <div className="bg-[#fcfef1] p-4 rounded-2xl border border-[#00523b]/15 shadow-sm space-y-3">
             {/* General Order Info summary */}

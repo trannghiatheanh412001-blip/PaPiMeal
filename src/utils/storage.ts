@@ -10,11 +10,38 @@ export const CUTOFF_HOUR = 14;
 export const SHOP_ADDRESS = "16B Trần Văn Thành, Phường Chánh Hưng, Quận 8";
 export const SHOP_PHONE = "0901 464 021";
 
-// 2 accounts: Admin & Kitchen
-export const ACCOUNTS = [
+export interface Account {
+  phone: string;
+  password: string;
+  role: "ADMIN" | "KITCHEN";
+  name: string;
+}
+
+const ACCOUNTS_KEY = "papimeal_accounts";
+const DEFAULT_ACCOUNTS: Account[] = [
   { phone: "0901464021", password: "KHOINGHIEP", role: "ADMIN", name: "Quản trị" },
   { phone: "0917106326", password: "THANHCONG", role: "KITCHEN", name: "Bếp" }
 ];
+
+export function loadAccounts(): Account[] {
+  const data = localStorage.getItem(ACCOUNTS_KEY);
+  if (!data) {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
+    return DEFAULT_ACCOUNTS;
+  }
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return DEFAULT_ACCOUNTS;
+  }
+}
+
+export function saveAccounts(accounts: Account[]) {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+
+// Kept for legacy backward compatibility
+export const ACCOUNTS = loadAccounts();
 
 export const STATUS_FLOW = [
   "Chờ xử lý",

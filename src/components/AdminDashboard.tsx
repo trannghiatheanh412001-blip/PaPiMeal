@@ -33,7 +33,8 @@ import {
   loadOrders, 
   saveOrders, 
   addStatusLog, 
-  ACCOUNTS, 
+  loadAccounts,
+  saveAccounts,
   SHOP_ADDRESS, 
   STATUS_FLOW, 
   STATUS_CANCEL 
@@ -59,6 +60,13 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   // Google Sheets state
   const [sheetUrl, setSheetUrl] = useState(() => getGoogleSheetsUrl());
   const [copied, setCopied] = useState(false);
+
+  // Credentials & Notification states
+  const [adminPhone, setAdminPhone] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [kitchenPhone, setKitchenPhone] = useState("");
+  const [kitchenPassword, setKitchenPassword] = useState("");
+  const [adminNotificationEmail, setAdminNotificationEmail] = useState(() => localStorage.getItem("papimeal_admin_email") || "");
 
   // Product List states
   const [products, setProducts] = useState<Product[]>([]);
@@ -109,12 +117,25 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
     }
     setProducts(loadProducts());
     setCategories(loadCategories());
+
+    // Load admin & kitchen credentials
+    const accs = loadAccounts();
+    const adminAcc = accs.find(a => a.role === "ADMIN");
+    const kitchenAcc = accs.find(a => a.role === "KITCHEN");
+    if (adminAcc) {
+      setAdminPhone(adminAcc.phone);
+      setAdminPassword(adminAcc.password);
+    }
+    if (kitchenAcc) {
+      setKitchenPhone(kitchenAcc.phone);
+      setKitchenPassword(kitchenAcc.password);
+    }
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanPhone = phone.trim();
-    const account = ACCOUNTS.find(a => a.phone === cleanPhone && a.password === password);
+    const account = loadAccounts().find(a => a.phone === cleanPhone && a.password === password);
     
     if (account && account.role === "ADMIN") {
       setIsLoggedIn(true);
@@ -130,6 +151,185 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
     sessionStorage.removeItem("papimeal_admin_logged");
     setPhone("");
     setPassword("");
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith("image/")) {
+      alert("❌ Vui lòng chỉ chọn file hình ảnh!");
+      return;
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+      alert("⚠️ Hình ảnh này có dung lượng lớn hơn 2MB. Hãy chọn hoặc nén ảnh nhỏ hơn 2MB để hệ thống lưu trữ mượt mà nhất!");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const base64 = uploadEvent.target?.result as string;
+      if (isEdit) {
+        setEditImg(base64);
+      } else {
+        setNewImg(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const exportAllData = () => {
+    try {
+      const data = {
+        products: localStorage.getItem("papimeal_products") || "[]",
+        categories: localStorage.getItem("papimeal_categories") || "[]",
+        orders: localStorage.getItem("papimeal_orders") || "[]",
+        logs: localStorage.getItem("papimeal_logs") || "[]",
+        appName: localStorage.getItem("papimeal_cfg_app_name") || "",
+        slogan: localStorage.getItem("papimeal_cfg_slogan") || "",
+        homeBannerTitle: localStorage.getItem("papimeal_cfg_home_banner_title") || "",
+        homeBannerSubtitle: localStorage.getItem("papimeal_cfg_home_banner_subtitle") || "",
+        successMessage: localStorage.getItem("papimeal_cfg_success_message") || "",
+        step1Title: localStorage.getItem("papimeal_cfg_step1_title") || "",
+        step1Sub: localStorage.getItem("papimeal_cfg_step1_sub") || "",
+        headerLogo: localStorage.getItem("papimeal_cfg_header_logo") || "",
+        homeRoundLogo: localStorage.getItem("papimeal_cfg_home_round_logo") || "",
+        homeBannerImage: localStorage.getItem("papimeal_cfg_home_banner_image") || "",
+        valueProp1Icon: localStorage.getItem("papimeal_cfg_vp1_icon") || "",
+        valueProp1Title: localStorage.getItem("papimeal_cfg_vp1_title") || "",
+        valueProp1Desc: localStorage.getItem("papimeal_cfg_vp1_desc") || "",
+        valueProp2Icon: localStorage.getItem("papimeal_cfg_vp2_icon") || "",
+        valueProp2Title: localStorage.getItem("papimeal_cfg_vp2_title") || "",
+        valueProp2Desc: localStorage.getItem("papimeal_cfg_vp2_desc") || "",
+        valueProp3Icon: localStorage.getItem("papimeal_cfg_vp3_icon") || "",
+        valueProp3Title: localStorage.getItem("papimeal_cfg_vp3_title") || "",
+        valueProp3Desc: localStorage.getItem("papimeal_cfg_vp3_desc") || "",
+        shopAddress: localStorage.getItem("papimeal_cfg_shop_address") || "",
+        shopPhone: localStorage.getItem("papimeal_cfg_shop_phone") || "",
+        startOrderBtn: localStorage.getItem("papimeal_cfg_start_order_btn") || "",
+        homeBackBtn: localStorage.getItem("papimeal_cfg_home_back_btn") || "",
+        step2Title: localStorage.getItem("papimeal_cfg_step2_title") || "",
+        step2Sub: localStorage.getItem("papimeal_cfg_step2_sub") || "",
+        confirmTitle: localStorage.getItem("papimeal_cfg_confirm_title") || "",
+        confirmSub: localStorage.getItem("papimeal_cfg_confirm_sub") || "",
+        googleSheetsUrl: localStorage.getItem("papimeal_google_sheets_url") || "",
+        accounts: localStorage.getItem("papimeal_accounts") || "",
+        adminNotificationEmail: localStorage.getItem("papimeal_admin_email") || ""
+      };
+      
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", jsonString);
+      const dateStr = new Date().toISOString().split('T')[0];
+      downloadAnchor.setAttribute("download", `papimeal_backup_${dateStr}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (err) {
+      alert("❌ Lỗi khi xuất file sao lưu: " + String(err));
+    }
+  };
+
+  const importAllData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    fileReader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target?.result as string);
+        
+        const confirmOverwrite = window.confirm("⚠️ Bạn có chắc chắn muốn ghi đè toàn bộ dữ liệu hiện tại bằng file sao lưu này? Hành động này sẽ thay thế toàn bộ danh sách món ăn, đơn hàng và các câu chữ cấu hình hiện có!");
+        if (!confirmOverwrite) return;
+
+        if (parsed.products) {
+          localStorage.setItem("papimeal_products", parsed.products);
+          setProducts(JSON.parse(parsed.products));
+        }
+        if (parsed.categories) {
+          localStorage.setItem("papimeal_categories", parsed.categories);
+          setCategories(JSON.parse(parsed.categories));
+        }
+        if (parsed.orders) {
+          localStorage.setItem("papimeal_orders", parsed.orders);
+        }
+        if (parsed.logs) {
+          localStorage.setItem("papimeal_logs", parsed.logs);
+        }
+        
+        const keysMap: { [key: string]: string } = {
+          appName: "papimeal_cfg_app_name",
+          slogan: "papimeal_cfg_slogan",
+          homeBannerTitle: "papimeal_cfg_home_banner_title",
+          homeBannerSubtitle: "papimeal_cfg_home_banner_subtitle",
+          successMessage: "papimeal_cfg_success_message",
+          step1Title: "papimeal_cfg_step1_title",
+          step1Sub: "papimeal_cfg_step1_sub",
+          headerLogo: "papimeal_cfg_header_logo",
+          homeRoundLogo: "papimeal_cfg_home_round_logo",
+          homeBannerImage: "papimeal_cfg_home_banner_image",
+          valueProp1Icon: "papimeal_cfg_vp1_icon",
+          valueProp1Title: "papimeal_cfg_vp1_title",
+          valueProp1Desc: "papimeal_cfg_vp1_desc",
+          valueProp2Icon: "papimeal_cfg_vp2_icon",
+          valueProp2Title: "papimeal_cfg_vp2_title",
+          valueProp2Desc: "papimeal_cfg_vp2_desc",
+          valueProp3Icon: "papimeal_cfg_vp3_icon",
+          valueProp3Title: "papimeal_cfg_vp3_title",
+          valueProp3Desc: "papimeal_cfg_vp3_desc",
+          shopAddress: "papimeal_cfg_shop_address",
+          shopPhone: "papimeal_cfg_shop_phone",
+          startOrderBtn: "papimeal_cfg_start_order_btn",
+          homeBackBtn: "papimeal_cfg_home_back_btn",
+          step2Title: "papimeal_cfg_step2_title",
+          step2Sub: "papimeal_cfg_step2_sub",
+          confirmTitle: "papimeal_cfg_confirm_title",
+          confirmSub: "papimeal_cfg_confirm_sub",
+          googleSheetsUrl: "papimeal_google_sheets_url"
+        };
+
+        Object.keys(keysMap).forEach(k => {
+          if (parsed[k] !== undefined) {
+            localStorage.setItem(keysMap[k], parsed[k]);
+          }
+        });
+
+        if (parsed.accounts) {
+          localStorage.setItem("papimeal_accounts", parsed.accounts);
+          try {
+            const accs = JSON.parse(parsed.accounts);
+            const adminAcc = accs.find((a: any) => a.role === "ADMIN");
+            const kitchenAcc = accs.find((a: any) => a.role === "KITCHEN");
+            if (adminAcc) {
+              setAdminPhone(adminAcc.phone);
+              setAdminPassword(adminAcc.password);
+            }
+            if (kitchenAcc) {
+              setKitchenPhone(kitchenAcc.phone);
+              setKitchenPassword(kitchenAcc.password);
+            }
+          } catch (accErr) {
+            console.error("Error restoring accounts", accErr);
+          }
+        }
+        if (parsed.adminNotificationEmail !== undefined) {
+          localStorage.setItem("papimeal_admin_email", parsed.adminNotificationEmail);
+          setAdminNotificationEmail(parsed.adminNotificationEmail);
+        }
+
+        // Update states
+        setTextConfig(loadTextConfig());
+        if (parsed.googleSheetsUrl !== undefined) {
+          setSheetUrl(parsed.googleSheetsUrl);
+        }
+        triggerRefresh();
+        alert("🎉 Khôi phục và nâng cấp toàn bộ dữ liệu hệ thống thành công! Trang web đã tải lại các cấu hình cũ của bạn.");
+      } catch (err) {
+        alert("❌ File sao lưu không đúng định dạng hoặc bị lỗi: " + String(err));
+      }
+    };
+    fileReader.readAsText(file);
   };
 
   // Toggle status of a product (Active/Inactive)
@@ -418,9 +618,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
           </button>
         </form>
 
-        <p className="text-[10px] text-center text-[#394013]/60 italic font-medium">
-          * Admin: <span className="font-bold">0901464021</span> / Pass: <span className="font-bold">KHOINGHIEP</span>
-        </p>
+        {/* Password suggestion removed for security */}
 
         <div className="text-center pt-2">
           <button
@@ -701,14 +899,53 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-[#394013] mb-0.5">URL hình ảnh chi tiết</label>
-            <input 
-              type="url" 
-              placeholder="https://..."
-              value={newImg}
-              onChange={e => setNewImg(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-            />
+            <label className="block text-[10px] font-bold text-[#394013] mb-0.5">Hình ảnh món ăn (URL hoặc Tải lên từ máy)</label>
+            <div className="space-y-2">
+              <input 
+                type="text" 
+                placeholder="https://... hoặc chuỗi dữ liệu ảnh tải lên"
+                value={newImg}
+                onChange={e => setNewImg(e.target.value)}
+                className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+              />
+              <div className="flex items-center gap-2">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={e => handleImageUpload(e, false)}
+                  id="add-product-image-upload"
+                  className="hidden"
+                />
+                <label 
+                  htmlFor="add-product-image-upload"
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#00523b] border border-[#00523b]/30 rounded-lg text-[10px] font-bold cursor-pointer transition flex items-center gap-1"
+                >
+                  📸 Chọn ảnh từ điện thoại / máy tính
+                </label>
+                {newImg && (
+                  <button 
+                    type="button"
+                    onClick={() => setNewImg("")}
+                    className="text-red-500 text-[10px] font-bold hover:underline cursor-pointer"
+                  >
+                    Xóa ảnh
+                  </button>
+                )}
+              </div>
+              {newImg && (
+                <div className="mt-1 border border-dashed border-[#00523b]/20 p-1.5 rounded-lg inline-block bg-white">
+                  <img 
+                    src={newImg} 
+                    alt="Preview" 
+                    referrerPolicy="no-referrer"
+                    className="h-16 w-16 object-cover rounded-md"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -1138,6 +1375,48 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
       {/* ======================= TAB 5: GOOGLE SHEETS SETTINGS ======================= */}
       {activeTab === 'sheets' && (
         <div className="space-y-4">
+          {/* ======================= SAO LƯU & KHÔI PHỤC HỆ THỐNG ======================= */}
+          <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-4">
+            <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5 uppercase tracking-wider">
+              💾 Sao Lưu & Khôi Phục Hệ Thống (Tránh Mất Dữ Liệu)
+            </h4>
+            <p className="text-xs text-[#394013]/80 leading-relaxed font-medium">
+              Bạn lo lắng mất dữ liệu (đơn hàng, danh sách món ăn, cài đặt câu chữ) khi nâng cấp hệ thống hoặc thay đổi link web? 
+              Hãy tải file sao lưu (.json) dưới đây để lưu lại và khôi phục (import) nhanh chóng bất cứ lúc nào!
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {/* Xuất dữ liệu */}
+              <button
+                type="button"
+                onClick={exportAllData}
+                className="py-3 px-4 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-black rounded-xl text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                📥 Tải File Sao Lưu Hệ Thống (.json)
+              </button>
+
+              {/* Nhập dữ liệu */}
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importAllData}
+                  id="import-backup-file"
+                  className="hidden"
+                />
+                <label
+                  htmlFor="import-backup-file"
+                  className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  📤 Khôi Phục Từ File Sao Lưu (.json)
+                </label>
+              </div>
+            </div>
+            <p className="text-[10px] text-gray-500 italic text-center font-bold">
+              💡 Khuyên dùng: Nên tải và cất giữ file backup này về máy tính cá nhân trước mỗi lần nâng cấp web!
+            </p>
+          </div>
+
           <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-3">
             <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5 uppercase tracking-wider">
               📊 Kết nối Google Sheets
@@ -1188,13 +1467,138 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                         portions: [[{ id: "TEST", name: "Cơm Gà Thử Nghiệm", qty: 1, price: 35000 }]]
                       };
                       await sendToGoogleSheets("NEW_ORDER", testOrder);
-                      alert("✉️ Đã gửi tín hiệu thử nghiệm! Hãy kiểm tra Google Sheet của bạn để xem dòng dữ liệu mới nhé!");
+                      alert("✉️ Đã gửi tín hiệu thử nghiệm! Hãy kiểm tra Google Sheet & Hộp thư Email của bạn để xem dòng dữ liệu mới nhé!");
                     }}
                     className="py-2 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold rounded-lg text-xs transition cursor-pointer"
                   >
                     Gửi Thử Nghiệm ⚡
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* ======================= QUẢN LÝ TÀI KHOẢN & THÔNG BÁO ======================= */}
+          <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-4">
+            <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5 uppercase tracking-wider">
+              🔐 Tài Khoản Đăng Nhập & Email Thông Báo
+            </h4>
+            <p className="text-xs text-[#394013]/80 leading-relaxed font-medium">
+              Tự do thay đổi số điện thoại và mật khẩu đăng nhập của Admin, màn hình Bếp và cấu hình Email nhận thông báo tự động mỗi khi có khách đặt món!
+            </p>
+
+            {/* Phần 1: Tài khoản */}
+            <div className="space-y-3 border-t border-[#00523b]/10 pt-3">
+              <h5 className="text-[11px] font-black text-[#00523b] uppercase tracking-wider">
+                👥 Thay đổi tài khoản hệ thống:
+              </h5>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Admin */}
+                <div className="bg-white p-3 rounded-xl border border-gray-100 space-y-2">
+                  <span className="text-[10px] font-extrabold text-amber-800 uppercase block">🛡️ Tài khoản Admin (Quản trị)</span>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Số điện thoại đăng nhập:</label>
+                    <input 
+                      type="text" 
+                      value={adminPhone}
+                      onChange={e => setAdminPhone(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-[#00523b]/15 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Mật khẩu:</label>
+                    <input 
+                      type="text" 
+                      value={adminPassword}
+                      onChange={e => setAdminPassword(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-[#00523b]/15 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Kitchen */}
+                <div className="bg-white p-3 rounded-xl border border-gray-100 space-y-2">
+                  <span className="text-[10px] font-extrabold text-teal-800 uppercase block">🍳 Tài khoản Bếp (Màn hình nấu)</span>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Số điện thoại đăng nhập:</label>
+                    <input 
+                      type="text" 
+                      value={kitchenPhone}
+                      onChange={e => setKitchenPhone(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-[#00523b]/15 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Mật khẩu:</label>
+                    <input 
+                      type="text" 
+                      value={kitchenPassword}
+                      onChange={e => setKitchenPassword(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-[#00523b]/15 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!adminPhone.trim() || !adminPassword.trim() || !kitchenPhone.trim() || !kitchenPassword.trim()) {
+                    alert("❌ Vui lòng điền đầy đủ thông tin số điện thoại và mật khẩu!");
+                    return;
+                  }
+                  const updatedAccounts = [
+                    { phone: adminPhone.trim(), password: adminPassword.trim(), role: "ADMIN" as const, name: "Quản trị" },
+                    { phone: kitchenPhone.trim(), password: kitchenPassword.trim(), role: "KITCHEN" as const, name: "Bếp" }
+                  ];
+                  saveAccounts(updatedAccounts);
+                  alert("🎉 Đã lưu thông tin tài khoản mới thành công! Từ giờ hãy dùng thông tin này để đăng nhập hệ thống.");
+                }}
+                className="w-full py-2 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-bold rounded-lg text-xs shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                Cập Nhật Tài Khoản Đăng Nhập 💾
+              </button>
+            </div>
+
+            {/* Phần 2: Email */}
+            <div className="space-y-3 border-t border-[#00523b]/10 pt-3">
+              <h5 className="text-[11px] font-black text-[#00523b] uppercase tracking-wider">
+                ✉️ Email nhận thông báo đơn hàng:
+              </h5>
+              
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 mb-1">Địa chỉ Email nhận tin nhắn:</label>
+                <input 
+                  type="email" 
+                  placeholder="nhap_email_cua_ban@gmail.com"
+                  value={adminNotificationEmail}
+                  onChange={e => setAdminNotificationEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const val = adminNotificationEmail.trim();
+                  if (val && val.indexOf("@") === -1) {
+                    alert("❌ Địa chỉ Email không hợp lệ!");
+                    return;
+                  }
+                  localStorage.setItem("papimeal_admin_email", val);
+                  alert("🎉 Đã lưu email thông báo đơn hàng: " + (val || "(Trống - Tắt thông báo)") + "!");
+                }}
+                className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-xs shadow-sm transition cursor-pointer"
+              >
+                Lưu Cấu Hình Email 💾
+              </button>
+
+              <div className="bg-amber-50 border border-amber-200/50 p-2.5 rounded-lg text-[10px] text-amber-900 leading-relaxed space-y-1">
+                <p className="font-extrabold text-amber-950 uppercase">💡 HƯỚNG DẪN ĐỂ EMAIL HOẠT ĐỘNG:</p>
+                <p>1. Cơm Niêu PaPi sử dụng chính hạ tầng Google Apps Script miễn phí của bạn để gửi email tốc độ cao.</p>
+                <p>2. Khi bạn cập nhật email ở đây, hãy sao chép mẫu <b>Google Apps Script</b> ở khung phía dưới và dán đè/cập nhật lên script hiện tại của bạn.</p>
+                <p>3. Chọn <b>Deploy (Triển khai)</b> và <b>New Deployment (Triển khai mới)</b> trên Google Sheets để lưu phiên bản mới nhất.</p>
               </div>
             </div>
           </div>
@@ -1408,7 +1812,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
               {/* PHẦN 4: THÔNG BÁO & QUY TRÌNH */}
               <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
                 <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  💬 Quy trình đặt & Thông báo thành công
+                  💬 Quy trình đặt, Thông báo, Nút nhấn & Liên hệ
                 </h5>
                 <div>
                   <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước 1 (Chọn lượng & Hẹn giờ):</label>
@@ -1430,7 +1834,92 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                   />
                 </div>
 
+                {/* Bước 2 */}
+                <div className="border-t border-gray-100 pt-3">
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước 2 (Chọn món theo phần):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.step2Title}
+                    onChange={e => setTextConfig(prev => ({ ...prev, step2Title: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+
                 <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước 2 (Mô tả chọn món):</label>
+                  <textarea 
+                    rows={2}
+                    value={textConfig.step2Sub}
+                    onChange={e => setTextConfig(prev => ({ ...prev, step2Sub: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                  />
+                </div>
+
+                {/* Xác nhận */}
+                <div className="border-t border-gray-100 pt-3">
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước Xác nhận hóa đơn:</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.confirmTitle}
+                    onChange={e => setTextConfig(prev => ({ ...prev, confirmTitle: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước Xác nhận hóa đơn:</label>
+                  <textarea 
+                    rows={2}
+                    value={textConfig.confirmSub}
+                    onChange={e => setTextConfig(prev => ({ ...prev, confirmSub: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                  />
+                </div>
+
+                {/* Các nút bấm */}
+                <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên nút đặt món chính:</label>
+                    <input 
+                      type="text" 
+                      value={textConfig.startOrderBtn}
+                      onChange={e => setTextConfig(prev => ({ ...prev, startOrderBtn: e.target.value }))}
+                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên nút quay lại trang chủ:</label>
+                    <input 
+                      type="text" 
+                      value={textConfig.homeBackBtn}
+                      onChange={e => setTextConfig(prev => ({ ...prev, homeBackBtn: e.target.value }))}
+                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Địa chỉ & Điện thoại */}
+                <div className="border-t border-gray-100 pt-3">
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Địa chỉ bếp (Hiện khi chọn Ghé lấy):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.shopAddress}
+                    onChange={e => setTextConfig(prev => ({ ...prev, shopAddress: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Điện thoại liên hệ của bếp:</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.shopPhone}
+                    onChange={e => setTextConfig(prev => ({ ...prev, shopPhone: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                  />
+                </div>
+
+                <div className="border-t border-gray-100 pt-3">
                   <label className="block text-[11px] font-bold text-[#394013] mb-1">Thông báo khi khách Đặt đơn Thành Công:</label>
                   <textarea 
                     rows={2}
@@ -1446,7 +1935,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                 onClick={() => {
                   saveTextConfig(textConfig);
                   triggerRefresh();
-                  alert("🎉 Đã cập nhật và lưu toàn bộ tiêu đề, logo & giao diện hiển thị thành công!");
+                  alert("🎉 Đã cập nhật và lưu toàn bộ tiêu đề, logo & các chi tiết giao diện thành công!");
                 }}
                 className="w-full py-4 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-black rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2"
               >
@@ -1598,13 +2087,52 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 mb-0.5">URL hình ảnh</label>
-                  <input 
-                    type="text" 
-                    value={editImg}
-                    onChange={e => setEditImg(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-                  />
+                  <label className="block text-[10px] font-bold text-gray-400 mb-0.5">Hình ảnh món ăn (URL hoặc Tải lên từ máy)</label>
+                  <div className="space-y-2">
+                    <input 
+                      type="text" 
+                      value={editImg}
+                      onChange={e => setEditImg(e.target.value)}
+                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={e => handleImageUpload(e, true)}
+                        id="edit-product-image-upload"
+                        className="hidden"
+                      />
+                      <label 
+                        htmlFor="edit-product-image-upload"
+                        className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#00523b] border border-[#00523b]/30 rounded-lg text-[10px] font-bold cursor-pointer transition flex items-center gap-1"
+                      >
+                        📸 Chọn ảnh từ điện thoại / máy tính
+                      </label>
+                      {editImg && (
+                        <button 
+                          type="button"
+                          onClick={() => setEditImg("")}
+                          className="text-red-500 text-[10px] font-bold hover:underline cursor-pointer"
+                        >
+                          Xóa ảnh
+                        </button>
+                      )}
+                    </div>
+                    {editImg && (
+                      <div className="mt-1 border border-dashed border-[#00523b]/20 p-1.5 rounded-lg inline-block bg-white">
+                        <img 
+                          src={editImg} 
+                          alt="Preview" 
+                          referrerPolicy="no-referrer"
+                          className="h-16 w-16 object-cover rounded-md"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80";
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>

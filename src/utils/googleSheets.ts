@@ -35,7 +35,8 @@ export async function sendToGoogleSheets(actionType: "NEW_ORDER" | "UPDATE_STATU
       status: order.status,
       portionsCount: order.portionsCount,
       totalAmount: order.totalAmount,
-      portionsText
+      portionsText,
+      adminNotificationEmail: localStorage.getItem("papimeal_admin_email") || ""
     };
 
     // We use mode: 'no-cors' and text/plain to circumvent browser preflight (CORS) check blockages on GAS
@@ -109,6 +110,42 @@ export const APPS_SCRIPT_TEMPLATE = `function doPost(e) {
     
     // Tự động căn chỉnh độ rộng cột
     sheet.autoResizeColumns(1, 15);
+    
+    // TỰ ĐỘNG GỬI EMAIL THÔNG BÁO CHO ADMIN KHI CÓ KHÁCH ĐẶT ĐƠN MỚI
+    if ((data.action === "NEW_ORDER") && data.adminNotificationEmail) {
+      var recipient = data.adminNotificationEmail.toString().trim();
+      if (recipient.length > 3 && recipient.indexOf("@") !== -1) {
+        var subject = "🔔 [ĐƠN HÀNG MỚI] Khách " + data.customerName + " đã đặt đơn " + data.orderId;
+        var htmlBody = 
+          "<div style='font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #00523b; border-radius: 12px; padding: 20px;'>" +
+          "<h2 style='color: #00523b; border-bottom: 2px solid #00523b; padding-bottom: 10px;'>🍱 CÓ ĐƠN HÀNG MỚI TỪ PAPIMEAL!</h2>" +
+          "<p><b>Mã đơn hàng:</b> <span style='font-size: 16px; color: #d97706; font-weight: bold;'>" + data.orderId + "</span></p>" +
+          "<p><b>Tên khách hàng:</b> " + data.customerName + "</p>" +
+          "<p><b>Số điện thoại:</b> " + data.phone + "</p>" +
+          "<p><b>Thời gian nhận cơm:</b> <span style='color: #00523b; font-weight: bold;'>" + data.receiveTime + " ngày " + data.receiveDate + " (" + data.session + ")</span></p>" +
+          "<p><b>Hình thức giao:</b> " + data.deliveryMethod + "</p>" +
+          "<p><b>Địa chỉ:</b> " + (data.address || "Ghé lấy tại quầy") + "</p>" +
+          "<p><b>Số phần ăn:</b> " + data.portionsCount + " suất</p>" +
+          "<p><b>Tổng giá trị:</b> <span style='font-size: 16px; color: #00523b; font-weight: bold;'>" + Number(data.totalAmount).toLocaleString() + " đ</span></p>" +
+          "<p><b>Chi tiết phần ăn món riêng:</b></p>" +
+          "<div style='background-color: #fcfef1; padding: 12px; border-radius: 8px; border: 1px solid #00523b/10;'>" +
+            data.portionsText +
+          "</div>" +
+          "<p style='margin-top: 15px;'><b>Ghi chú của khách:</b> " + (data.notes || "Không có") + "</p>" +
+          "<p style='color: #888; font-size: 12px; margin-top: 25px; border-top: 1px dashed #ccc; padding-top: 10px;'>Hệ thống gửi tự động từ Website PaPiMeal. Vui lòng truy cập trang Quản trị Admin để cập nhật trạng thái đơn hàng.</p>" +
+          "</div>";
+          
+        try {
+          MailApp.sendEmail({
+            to: recipient,
+            subject: subject,
+            htmlBody: htmlBody
+          });
+        } catch (emailErr) {
+          Logger.log("Lỗi gửi email: " + emailErr.toString());
+        }
+      }
+    }
     
     return ContentService.createTextOutput(JSON.stringify({ "status": "success" }))
       .setMimeType(ContentService.MimeType.JSON);

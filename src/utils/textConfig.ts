@@ -17,7 +17,15 @@ const CONFIG_KEYS = {
   VP2_DESC: "papimeal_cfg_vp2_desc",
   VP3_ICON: "papimeal_cfg_vp3_icon",
   VP3_TITLE: "papimeal_cfg_vp3_title",
-  VP3_DESC: "papimeal_cfg_vp3_desc"
+  VP3_DESC: "papimeal_cfg_vp3_desc",
+  SHOP_ADDRESS: "papimeal_cfg_shop_address",
+  SHOP_PHONE: "papimeal_cfg_shop_phone",
+  START_ORDER_BTN: "papimeal_cfg_start_order_btn",
+  HOME_BACK_BTN: "papimeal_cfg_home_back_btn",
+  STEP2_TITLE: "papimeal_cfg_step2_title",
+  STEP2_SUB: "papimeal_cfg_step2_sub",
+  CONFIRM_TITLE: "papimeal_cfg_confirm_title",
+  CONFIRM_SUB: "papimeal_cfg_confirm_sub"
 };
 
 export interface AppTextConfig {
@@ -40,6 +48,14 @@ export interface AppTextConfig {
   valueProp3Icon: string;
   valueProp3Title: string;
   valueProp3Desc: string;
+  shopAddress: string;
+  shopPhone: string;
+  startOrderBtn: string;
+  homeBackBtn: string;
+  step2Title: string;
+  step2Sub: string;
+  confirmTitle: string;
+  confirmSub: string;
 }
 
 export function loadTextConfig(): AppTextConfig {
@@ -62,7 +78,15 @@ export function loadTextConfig(): AppTextConfig {
     valueProp2Desc: localStorage.getItem(CONFIG_KEYS.VP2_DESC) || "Chốt nguyên liệu tươi ngon lúc 14h00 hàng ngày, tuyệt đối vệ sinh.",
     valueProp3Icon: localStorage.getItem(CONFIG_KEYS.VP3_ICON) || "🚀",
     valueProp3Title: localStorage.getItem(CONFIG_KEYS.VP3_TITLE) || "Tra Cứu Trực Quan Realtime",
-    valueProp3Desc: localStorage.getItem(CONFIG_KEYS.VP3_DESC) || "Xem tiến trình chế biến món ăn từ bếp của PaPiMeal bất cứ lúc nào."
+    valueProp3Desc: localStorage.getItem(CONFIG_KEYS.VP3_DESC) || "Xem tiến trình chế biến món ăn từ bếp của PaPiMeal bất cứ lúc nào.",
+    shopAddress: localStorage.getItem(CONFIG_KEYS.SHOP_ADDRESS) || "16B Trần Văn Thành, Phường Chánh Hưng, Quận 8",
+    shopPhone: localStorage.getItem(CONFIG_KEYS.SHOP_PHONE) || "0901 464 021",
+    startOrderBtn: localStorage.getItem(CONFIG_KEYS.START_ORDER_BTN) || "Đặt Món Ngay",
+    homeBackBtn: localStorage.getItem(CONFIG_KEYS.HOME_BACK_BTN) || "Quay lại trang chủ",
+    step2Title: localStorage.getItem(CONFIG_KEYS.STEP2_TITLE) || "Chọn Món Theo Phần",
+    step2Sub: localStorage.getItem(CONFIG_KEYS.STEP2_SUB) || "Lựa chọn các món ăn ngon miệng riêng biệt cho từng người.",
+    confirmTitle: localStorage.getItem(CONFIG_KEYS.CONFIRM_TITLE) || "Xác Nhận & Gửi Đơn Hàng",
+    confirmSub: localStorage.getItem(CONFIG_KEYS.CONFIRM_SUB) || "Kiểm tra kỹ thông tin từng phần ăn & địa điểm trước khi gửi đến bếp nhé."
   };
 }
 
@@ -86,4 +110,12 @@ export function saveTextConfig(config: AppTextConfig) {
   localStorage.setItem(CONFIG_KEYS.VP3_ICON, config.valueProp3Icon.trim());
   localStorage.setItem(CONFIG_KEYS.VP3_TITLE, config.valueProp3Title.trim());
   localStorage.setItem(CONFIG_KEYS.VP3_DESC, config.valueProp3Desc.trim());
+  localStorage.setItem(CONFIG_KEYS.SHOP_ADDRESS, config.shopAddress.trim());
+  localStorage.setItem(CONFIG_KEYS.SHOP_PHONE, config.shopPhone.trim());
+  localStorage.setItem(CONFIG_KEYS.START_ORDER_BTN, config.startOrderBtn.trim());
+  localStorage.setItem(CONFIG_KEYS.HOME_BACK_BTN, config.homeBackBtn.trim());
+  localStorage.setItem(CONFIG_KEYS.STEP2_TITLE, config.step2Title.trim());
+  localStorage.setItem(CONFIG_KEYS.STEP2_SUB, config.step2Sub.trim());
+  localStorage.setItem(CONFIG_KEYS.CONFIRM_TITLE, config.confirmTitle.trim());
+  localStorage.setItem(CONFIG_KEYS.CONFIRM_SUB, config.confirmSub.trim());
 }
