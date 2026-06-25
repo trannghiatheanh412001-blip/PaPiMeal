@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Order } from "./types";
 import { loadOrders, saveOrders, getEarliestOrderDate } from "./utils/storage";
+import { loadTextConfig } from "./utils/textConfig";
 import CustomerFlow from "./components/CustomerFlow";
 import OrderTracking from "./components/OrderTracking";
 import KitchenDashboard from "./components/KitchenDashboard";
@@ -25,10 +26,12 @@ export default function App() {
   const [refreshToggle, setRefreshToggle] = useState(false);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [latestOrderId, setLatestOrderId] = useState("");
+  const [textConfig, setTextConfig] = useState(() => loadTextConfig());
 
   // Load orders on load & refresh
   useEffect(() => {
     setAllOrders(loadOrders());
+    setTextConfig(loadTextConfig());
   }, [refreshToggle]);
 
   const triggerRefresh = () => {
@@ -65,15 +68,24 @@ export default function App() {
             onClick={() => setView('home')} 
             className="flex items-center gap-2.5 cursor-pointer group"
           >
-            <div className="w-9 h-9 bg-[#00523b] rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-sm transition-transform group-hover:scale-105 duration-200">
-              P
+            <div className="w-9 h-9 bg-[#00523b] rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-sm transition-transform group-hover:scale-105 duration-200 overflow-hidden shrink-0">
+              {(textConfig.headerLogo.startsWith("http") || textConfig.headerLogo.startsWith("/") || textConfig.headerLogo.startsWith("data:")) ? (
+                <img 
+                  src={textConfig.headerLogo} 
+                  alt="Logo" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span>{textConfig.headerLogo}</span>
+              )}
             </div>
             <div>
               <h1 className="text-lg font-black text-[#00523b] tracking-tight font-sans leading-none">
-                PaPiMeal
+                {textConfig.appName}
               </h1>
               <span className="text-[8px] uppercase tracking-widest text-[#394013]/60 font-black block mt-0.5 leading-none">
-                Cơm Trưa Ngày Mai
+                {textConfig.slogan}
               </span>
             </div>
           </div>
@@ -109,15 +121,26 @@ export default function App() {
               >
                 {/* Visual Banner */}
                 <div className="bg-[#00523b] text-[#fffbd8] p-6 rounded-3xl shadow-md text-center space-y-2.5 relative overflow-hidden">
-                  <div className="absolute -right-6 -bottom-6 text-9xl opacity-10">🥗</div>
+                  <div className="absolute -right-6 -bottom-6 text-9xl opacity-15 w-32 h-32 flex items-center justify-center pointer-events-none select-none">
+                    {(textConfig.homeBannerImage.startsWith("http") || textConfig.homeBannerImage.startsWith("/") || textConfig.homeBannerImage.startsWith("data:")) ? (
+                      <img 
+                        src={textConfig.homeBannerImage} 
+                        alt="Banner decorative" 
+                        className="w-full h-full object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      textConfig.homeBannerImage
+                    )}
+                  </div>
                   <span className="text-[10px] uppercase tracking-widest bg-[#fffbd8]/10 text-[#fffbd8] px-2.5 py-1 rounded-full font-extrabold">
-                    Office Lunch Delivery
+                    {textConfig.slogan}
                   </span>
-                  <h2 className="text-2xl font-extrabold font-sans tracking-tight leading-tight">
-                    Giải Pháp Ăn Trưa <br />Thông Minh Cho Bạn
+                  <h2 className="text-xl sm:text-2xl font-extrabold font-sans tracking-tight leading-tight whitespace-pre-line">
+                    {textConfig.homeBannerTitle}
                   </h2>
-                  <p className="text-xs text-[#fffbd8]/85 font-medium max-w-xs mx-auto">
-                    Đặt cơm tách biệt từng khẩu phần cho nhóm bạn, tự động thống kê đi chợ và nấu ăn.
+                  <p className="text-xs text-[#fffbd8]/85 font-medium max-w-xs mx-auto leading-relaxed">
+                    {textConfig.homeBannerSubtitle}
                   </p>
                 </div>
 
@@ -273,8 +296,8 @@ export default function App() {
                   <h3 className="text-2xl font-black text-[#00523b] font-sans tracking-tight">
                     Đặt Món Thành Công!
                   </h3>
-                  <p className="text-xs text-[#394013]/70 font-semibold">
-                    Cảm ơn bạn đã tin tưởng dịch vụ cơm văn phòng của PaPiMeal!
+                  <p className="text-xs text-[#394013]/70 font-semibold px-2">
+                    {textConfig.successMessage}
                   </p>
                 </div>
 
@@ -284,7 +307,7 @@ export default function App() {
                     {latestOrderId}
                   </p>
                   <p className="text-[10px] text-[#394013]/60 italic font-medium leading-relaxed pt-1 border-t border-gray-100">
-                    &ldquo;Tụi mình sẽ sớm gọi điện thoại hoặc gửi Zalo xác nhận cho bạn liền nhé!&rdquo;
+                    &ldquo;Tụi mình sẽ sớm liên hệ xác nhận cho bạn liền nhé!&rdquo;
                   </p>
                 </div>
 

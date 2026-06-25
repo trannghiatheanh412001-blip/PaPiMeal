@@ -38,6 +38,7 @@ import {
   STATUS_FLOW, 
   STATUS_CANCEL 
 } from "../utils/storage";
+import { loadTextConfig, saveTextConfig } from "../utils/textConfig";
 import { sendToGoogleSheets, getGoogleSheetsUrl, saveGoogleSheetsUrl, APPS_SCRIPT_TEMPLATE } from "../utils/googleSheets";
 
 interface AdminDashboardProps {
@@ -52,8 +53,8 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // Subtab navigation: 'products' | 'add' | 'orders' | 'production' | 'sheets'
-  const [activeTab, setActiveTab] = useState<'products' | 'add' | 'orders' | 'production' | 'sheets'>('products');
+  // Subtab navigation: 'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets'
+  const [activeTab, setActiveTab] = useState<'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets'>('products');
 
   // Google Sheets state
   const [sheetUrl, setSheetUrl] = useState(() => getGoogleSheetsUrl());
@@ -97,7 +98,9 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   const [selectedOrderDetailId, setSelectedOrderDetailId] = useState<string | null>(null);
 
   // Production plan states
-  const [productionDate, setProductionDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [productionStartDate, setProductionStartDate] = useState("");
+  const [productionEndDate, setProductionEndDate] = useState("");
+  const [textConfig, setTextConfig] = useState(() => loadTextConfig());
 
   useEffect(() => {
     const saved = sessionStorage.getItem("papimeal_admin_logged");
@@ -307,7 +310,12 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
 
   // Tab 4: Detailed Production & Profit analysis for Admin
   const getProductionStats = () => {
-    const dayOrders = orders.filter(o => o.receiveDate === productionDate && o.status !== STATUS_CANCEL);
+    const dayOrders = orders.filter(o => {
+      if (o.status === STATUS_CANCEL) return false;
+      if (productionStartDate && o.receiveDate < productionStartDate) return false;
+      if (productionEndDate && o.receiveDate > productionEndDate) return false;
+      return true;
+    });
     
     // Sum product quantities
     const qtyMap: { [prodId: string]: number } = {};
@@ -443,10 +451,10 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
       </div>
 
       {/* Admin Nav Tabs */}
-      <div className="grid grid-cols-5 gap-0.5 bg-[#00523b]/5 p-1 rounded-xl">
+      <div className="grid grid-cols-6 gap-0.5 bg-[#00523b]/5 p-1 rounded-xl">
         <button
           onClick={() => setActiveTab('products')}
-          className={`py-2 text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
             activeTab === 'products' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
           }`}
         >
@@ -454,7 +462,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         </button>
         <button
           onClick={() => setActiveTab('add')}
-          className={`py-2 text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
             activeTab === 'add' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
           }`}
         >
@@ -462,15 +470,23 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         </button>
         <button
           onClick={() => setActiveTab('orders')}
-          className={`py-2 text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
             activeTab === 'orders' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
           }`}
         >
           🛒 Đơn
         </button>
         <button
+          onClick={() => setActiveTab('crm')}
+          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+            activeTab === 'crm' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
+          }`}
+        >
+          👥 Khách
+        </button>
+        <button
           onClick={() => setActiveTab('production')}
-          className={`py-2 text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
             activeTab === 'production' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
           }`}
         >
@@ -478,11 +494,11 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         </button>
         <button
           onClick={() => setActiveTab('sheets')}
-          className={`py-2 text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
             activeTab === 'sheets' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
           }`}
         >
-          📊 Sheets
+          ⚙️ Cài Đặt
         </button>
       </div>
 
@@ -827,19 +843,225 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         </div>
       )}
 
+      {/* ======================= TAB 3.5: CUSTOMER CRM SYSTEM ======================= */}
+      {activeTab === 'crm' && (() => {
+        // Build CRM list from orders
+        const customerMap: {
+          [phone: string]: {
+            name: string;
+            phone: string;
+            totalOrders: number;
+            completedOrders: number;
+            canceledOrders: number;
+            totalSpent: number;
+            latestOrderDate: string;
+            latestStatus: string;
+          }
+        } = {};
+
+        orders.forEach(order => {
+          const cleanPhone = order.phone.trim();
+          if (!cleanPhone) return;
+
+          if (!customerMap[cleanPhone]) {
+            customerMap[cleanPhone] = {
+              name: order.customerName,
+              phone: cleanPhone,
+              totalOrders: 0,
+              completedOrders: 0,
+              canceledOrders: 0,
+              totalSpent: 0,
+              latestOrderDate: order.receiveDate,
+              latestStatus: order.status
+            };
+          }
+
+          const cust = customerMap[cleanPhone];
+          cust.totalOrders += 1;
+
+          if (order.status === "Hoàn tất") {
+            cust.completedOrders += 1;
+            cust.totalSpent += order.totalAmount;
+          } else if (order.status === "Đã Hủy") {
+            cust.canceledOrders += 1;
+          } else {
+            // Other active statuses: we count their spending towards general trust
+            cust.totalSpent += order.totalAmount;
+          }
+
+          if (order.receiveDate >= cust.latestOrderDate) {
+            cust.name = order.customerName;
+            cust.latestOrderDate = order.receiveDate;
+            cust.latestStatus = order.status;
+          }
+        });
+
+        const customerList = Object.values(customerMap).sort((a, b) => b.totalSpent - a.totalSpent);
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-2">
+              <div className="flex justify-between items-center pb-1">
+                <h4 className="font-extrabold text-sm text-[#00523b] uppercase tracking-wider flex items-center gap-1">
+                  👥 Theo Dõi Khách Hàng (CRM)
+                </h4>
+                <span className="text-[10px] font-black text-[#00523b] bg-[#00523b]/10 px-2 py-0.5 rounded-full">
+                  {customerList.length} số điện thoại
+                </span>
+              </div>
+              <p className="text-xs text-[#394013]/80 leading-relaxed font-medium">
+                Quản lý mức độ đóng góp và lòng trung thành của khách hàng. Xếp hạng dựa trên tổng số tiền đã đặt mua thành công và đang chế biến.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {customerList.length === 0 ? (
+                <div className="bg-[#fcfef1] p-10 rounded-2xl border border-[#00523b]/10 text-center text-[#394013]/60 font-bold text-sm">
+                  Chưa có khách hàng nào đặt đơn trên hệ thống.
+                </div>
+              ) : (
+                customerList.map((cust, idx) => {
+                  const cancelRate = cust.totalOrders > 0 
+                    ? Math.round((cust.canceledOrders / cust.totalOrders) * 100) 
+                    : 0;
+
+                  return (
+                    <div 
+                      key={cust.phone}
+                      className="bg-white p-4 rounded-2xl border border-gray-150 shadow-sm hover:border-[#00523b]/30 transition duration-150 space-y-3"
+                    >
+                      <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-lg bg-[#00523b] text-[#fffbd8] flex items-center justify-center font-black text-xs shrink-0">
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <h5 className="font-extrabold text-sm text-gray-800 leading-tight">{cust.name}</h5>
+                            <span className="text-xs text-gray-500 font-bold tracking-wider select-all block mt-0.5">{cust.phone}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[9px] text-gray-400 font-extrabold block uppercase tracking-wider">Tổng Đã Mua</span>
+                          <span className="text-sm font-black text-[#00523b]">
+                            {cust.totalSpent.toLocaleString("vi-VN")}đ
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-extrabold">
+                        <div className="bg-blue-50 border border-blue-100/50 p-2 rounded-xl text-blue-900 space-y-0.5">
+                          <span className="text-blue-500 block text-[8px] uppercase tracking-wider">Tổng Đơn</span>
+                          <span className="text-xs font-black">{cust.totalOrders} lần</span>
+                        </div>
+                        <div className="bg-green-50 border border-green-100/50 p-2 rounded-xl text-green-900 space-y-0.5">
+                          <span className="text-green-500 block text-[8px] uppercase tracking-wider">Xong (Nhận)</span>
+                          <span className="text-xs font-black">{cust.completedOrders} lần</span>
+                        </div>
+                        <div className="bg-red-50 border border-red-100/50 p-2 rounded-xl text-red-900 space-y-0.5">
+                          <span className="text-red-500 block text-[8px] uppercase tracking-wider">Đã Hủy</span>
+                          <span className="text-xs font-black">{cust.canceledOrders} lần</span>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-100/50 p-2 rounded-xl text-amber-900 space-y-0.5">
+                          <span className="text-amber-600 block text-[8px] uppercase tracking-wider">Tỉ Lệ Hủy</span>
+                          <span className="text-xs font-black">{cancelRate}%</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[10px] text-gray-500 font-semibold bg-gray-50 p-2 rounded-xl border border-gray-100">
+                        <span>Lần cuối lên đơn: <strong className="text-gray-700">{cust.latestOrderDate.split('-').reverse().join('/')}</strong></span>
+                        <span className="flex items-center gap-1 text-gray-600">
+                          Trạng thái gần nhất: 
+                          <strong className="text-[#00523b] bg-white border border-[#00523b]/10 px-1.5 py-0.5 rounded shadow-sm text-[9px]">
+                            {cust.latestStatus}
+                          </strong>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ======================= TAB 4: PRODUCTION SUMMARY & BUSINESS REPORT ======================= */}
       {activeTab === 'production' && (
         <div className="space-y-4">
-          <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm">
-            <label className="block text-xs font-bold mb-1 flex items-center gap-1">
-              <Calendar size={14} className="text-[#00523b]" /> Chọn ngày phân tích chi tiết kinh doanh
+          <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-3">
+            <label className="block text-xs font-black text-[#00523b] uppercase tracking-wider flex items-center gap-1">
+              <Calendar size={14} className="text-[#00523b]" /> Chọn khoảng thời gian báo cáo
             </label>
-            <input 
-              type="date"
-              value={productionDate}
-              onChange={e => setProductionDate(e.target.value)}
-              className="w-full px-4 py-3 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-sm outline-none bg-white font-bold cursor-pointer"
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="text-[10px] text-[#394013]/60 font-black uppercase block mb-1">Từ ngày</span>
+                <input 
+                  type="date"
+                  value={productionStartDate}
+                  onChange={e => setProductionStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold cursor-pointer"
+                />
+              </div>
+              <div>
+                <span className="text-[10px] text-[#394013]/60 font-black uppercase block mb-1">Đến ngày</span>
+                <input 
+                  type="date"
+                  value={productionEndDate}
+                  onChange={e => setProductionEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Quick selectors */}
+            <div className="flex gap-1.5 flex-wrap pt-1.5 border-t border-[#00523b]/10">
+              <button 
+                type="button"
+                onClick={() => {
+                  setProductionStartDate("");
+                  setProductionEndDate("");
+                }}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition cursor-pointer ${
+                  !productionStartDate && !productionEndDate 
+                    ? "bg-[#00523b] text-white border-transparent shadow-sm" 
+                    : "bg-white text-[#394013] border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                Tất cả ngày 🌐
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  setProductionStartDate(today);
+                  setProductionEndDate(today);
+                }}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition cursor-pointer ${
+                  productionStartDate === new Date().toISOString().split('T')[0] && productionEndDate === new Date().toISOString().split('T')[0]
+                    ? "bg-[#00523b] text-white border-transparent shadow-sm" 
+                    : "bg-white text-[#394013] border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                Hôm nay 🎯
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  const to = new Date();
+                  const from = new Date();
+                  from.setDate(to.getDate() - 29); // 30 days total
+                  setProductionStartDate(from.toISOString().split('T')[0]);
+                  setProductionEndDate(to.toISOString().split('T')[0]);
+                }}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition cursor-pointer ${
+                  productionStartDate && productionEndDate && (new Date(productionEndDate).getTime() - new Date(productionStartDate).getTime() >= 28 * 24 * 3600 * 1000)
+                    ? "bg-[#00523b] text-white border-transparent shadow-sm" 
+                    : "bg-white text-[#394013] border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                30 ngày gần đây 📅
+              </button>
+            </div>
           </div>
 
           <div className="bg-[#fcfef1] p-5 rounded-2xl border border-[#00523b]/15 shadow-sm space-y-4">
@@ -847,8 +1069,10 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
               <h4 className="font-extrabold text-sm text-[#00523b] uppercase tracking-wider">
                 💰 Báo cáo Doanh Thu &amp; Chi Phí
               </h4>
-              <span className="text-xs font-bold bg-[#00523b]/10 text-[#00523b] px-2.5 py-0.5 rounded-full">
-                {productionDate.split('-').reverse().join('/')}
+              <span className="text-[10px] font-bold bg-[#00523b]/10 text-[#00523b] px-2.5 py-0.5 rounded-full">
+                {(!productionStartDate && !productionEndDate) 
+                  ? "Tất cả các ngày" 
+                  : `${productionStartDate ? productionStartDate.split('-').reverse().join('/') : 'Trước'} - ${productionEndDate ? productionEndDate.split('-').reverse().join('/') : 'Sau'}`}
               </span>
             </div>
 
@@ -972,6 +1196,262 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* ======================= CHỈNH SỬA TIÊU ĐỀ & CÂU CHỮ ======================= */}
+          <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-4">
+            <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5 uppercase tracking-wider">
+              ✍️ Tùy Biến Giao Diện & Ảnh/Logo Khách Hàng
+            </h4>
+            <p className="text-xs text-[#394013]/80 leading-relaxed font-medium">
+              Bạn có thể dễ dàng thay đổi tên thương hiệu, slogan, tải lên URL logo mới, đổi emoji, hoặc chỉnh sửa nội dung giới thiệu mà khách hàng sẽ thấy. Chỉ có Admin sau khi đăng nhập mới có quyền thay đổi các cài đặt này!
+            </p>
+
+            <div className="space-y-4 pt-1">
+              {/* PHẦN 1: THƯƠNG HIỆU & LOGO */}
+              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
+                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                  📌 Thương hiệu & Logo hình ảnh
+                </h5>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên ứng dụng chính (VD: PaPiMeal):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.appName}
+                    onChange={e => setTextConfig(prev => ({ ...prev, appName: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Slogan hiển thị (VD: Cơm Trưa Ngày Mai):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.slogan}
+                    onChange={e => setTextConfig(prev => ({ ...prev, slogan: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Logo góc trên bên trái (Nhập emoji hoặc link ảnh):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.headerLogo}
+                    onChange={e => setTextConfig(prev => ({ ...prev, headerLogo: e.target.value }))}
+                    placeholder="Nhập chữ, emoji hoặc link hình ảnh (http...)"
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
+                  />
+                  <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Ví dụ: <code className="bg-gray-100 px-1 rounded">P</code> hoặc link ảnh <code className="bg-gray-100 px-1 rounded">https://ten-mien.com/logo.png</code></span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Logo tròn chính giữa trang chủ (Nhập emoji hoặc link ảnh):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.homeRoundLogo}
+                    onChange={e => setTextConfig(prev => ({ ...prev, homeRoundLogo: e.target.value }))}
+                    placeholder="Nhập emoji hoặc link hình ảnh (http...)"
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
+                  />
+                  <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Ví dụ: <code className="bg-gray-100 px-1 rounded">🍱</code> hoặc link ảnh</span>
+                </div>
+              </div>
+
+              {/* PHẦN 2: BANNER TRANG CHỦ */}
+              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
+                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                  🎨 Banner Quảng Cáo & Khẩu hiệu chính
+                </h5>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Banner Trang Chủ:</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.homeBannerTitle}
+                    onChange={e => setTextConfig(prev => ({ ...prev, homeBannerTitle: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Mô tả Banner Trang Chủ:</label>
+                  <textarea 
+                    rows={2}
+                    value={textConfig.homeBannerSubtitle}
+                    onChange={e => setTextConfig(prev => ({ ...prev, homeBannerSubtitle: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Hình nền / Icon mờ góc Banner (Nhập emoji hoặc link ảnh):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.homeBannerImage}
+                    onChange={e => setTextConfig(prev => ({ ...prev, homeBannerImage: e.target.value }))}
+                    placeholder="Ví dụ: 🥗 hoặc link hình ảnh"
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* PHẦN 3: 3 KHỐI LỢI ÍCH TRANG CHỦ */}
+              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-4">
+                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                  ⭐ 3 Khối Lợi Ích & Cam Kết (Trang chủ khách hàng)
+                </h5>
+
+                {/* Khối 1 */}
+                <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
+                  <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 1</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1">
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
+                      <input 
+                        type="text"
+                        value={textConfig.valueProp1Icon}
+                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Icon: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
+                      <input 
+                        type="text"
+                        value={textConfig.valueProp1Title}
+                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Title: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
+                    <input 
+                      type="text"
+                      value={textConfig.valueProp1Desc}
+                      onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Desc: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Khối 2 */}
+                <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
+                  <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 2</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1">
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
+                      <input 
+                        type="text"
+                        value={textConfig.valueProp2Icon}
+                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Icon: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
+                      <input 
+                        type="text"
+                        value={textConfig.valueProp2Title}
+                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Title: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
+                    <input 
+                      type="text"
+                      value={textConfig.valueProp2Desc}
+                      onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Desc: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Khối 3 */}
+                <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
+                  <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 3</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1">
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
+                      <input 
+                        type="text"
+                        value={textConfig.valueProp3Icon}
+                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Icon: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
+                      <input 
+                        type="text"
+                        value={textConfig.valueProp3Title}
+                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Title: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
+                    <input 
+                      type="text"
+                      value={textConfig.valueProp3Desc}
+                      onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Desc: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* PHẦN 4: THÔNG BÁO & QUY TRÌNH */}
+              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
+                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                  💬 Quy trình đặt & Thông báo thành công
+                </h5>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước 1 (Chọn lượng & Hẹn giờ):</label>
+                  <input 
+                    type="text" 
+                    value={textConfig.step1Title}
+                    onChange={e => setTextConfig(prev => ({ ...prev, step1Title: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước 1 (Giải thích khẩu phần):</label>
+                  <textarea 
+                    rows={2}
+                    value={textConfig.step1Sub}
+                    onChange={e => setTextConfig(prev => ({ ...prev, step1Sub: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Thông báo khi khách Đặt đơn Thành Công:</label>
+                  <textarea 
+                    rows={2}
+                    value={textConfig.successMessage}
+                    onChange={e => setTextConfig(prev => ({ ...prev, successMessage: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  saveTextConfig(textConfig);
+                  triggerRefresh();
+                  alert("🎉 Đã cập nhật và lưu toàn bộ tiêu đề, logo & giao diện hiển thị thành công!");
+                }}
+                className="w-full py-4 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-black rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                Lưu Toàn Bộ Cấu Hình 💾
+              </button>
             </div>
           </div>
 

@@ -30,6 +30,20 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
   // Production Summary target date
   const [summaryDate, setSummaryDate] = useState(() => new Date().toISOString().split('T')[0]);
 
+  // Track checked state of individual items in portions for packaging safety
+  const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
+
+  const toggleChecked = (orderId: string, portionIdx: number, itemKey: string) => {
+    const key = `${orderId}-${portionIdx}-${itemKey}`;
+    setCheckedItems(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const copyPortionLabelText = (order: Order, portionIdx: number, itemsStr: string) => {
+    const label = `ĐƠN ${order.id} | KH: ${order.customerName} | SĐT: ${order.phone}\n[PHẦN ${portionIdx + 1}/${order.portionsCount}] Gồm: ${itemsStr}\n${order.notes ? `Ghi chú: ${order.notes}` : ''}`;
+    navigator.clipboard.writeText(label);
+    alert(`📋 Đã sao chép nhãn dán cho Phần ${portionIdx + 1}!`);
+  };
+
   // Load login state from session storage
   useEffect(() => {
     const saved = sessionStorage.getItem("papimeal_kitchen_logged");
@@ -245,83 +259,192 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
       </div>
 
       {/* Tab 1: Orders list designed super big for dirty hands / fast cooking */}
-      {subTab === 'orders' && (
-        <div className="space-y-4">
-          {activeOrders.length === 0 ? (
-            <div className="bg-[#fcfef1] p-10 rounded-2xl border border-[#00523b]/10 text-center text-[#394013]/60 font-bold text-sm">
-              🧑‍🍳 Bếp đã thảnh thơi! Hiện không có đơn hàng nào cần chế biến.
-              <p className="text-xs font-medium text-[#394013]/40 mt-1">Các đơn hàng mới sẽ tự động xuất hiện ở đây.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {activeOrders.map(order => (
-                <motion.div
-                  key={order.id}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-2xl border-l-8 border-[#00523b] shadow-md p-5 space-y-4"
-                >
-                  {/* Big Headings */}
-                  <div className="flex justify-between items-start border-b border-gray-100 pb-3">
-                    <div>
-                      <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">MÃ ĐƠN HÀNG</span>
-                      <h4 className="text-xl font-black text-[#00523b] tracking-tight">{order.id}</h4>
+      {subTab === 'orders' && (() => {
+        const pendingCount = orders.filter(o => o.status === "Chờ xử lý").length;
+        const activeAggregatedItems = (() => {
+          const agg: { [name: string]: number } = {};
+          activeOrders.forEach(o => {
+            o.portions.forEach(portion => {
+              portion.forEach(item => {
+                agg[item.name] = (agg[item.name] || 0) + item.qty;
+              });
+            });
+          });
+          return Object.entries(agg).sort((a, b) => b[1] - a[1]);
+        })();
+
+        return (
+          <div className="space-y-4">
+            {/* System warning for pending admin orders */}
+            {pendingCount > 0 && (
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-2xl text-xs flex items-start gap-2 text-amber-950 font-medium leading-relaxed shadow-sm">
+                <span className="text-lg shrink-0">⚠️</span>
+                <div>
+                  <span className="font-extrabold text-amber-900 block text-xs">THÔNG BÁO TỪ HỆ THỐNG:</span>
+                  Hiện có <strong className="text-amber-800 font-extrabold">{pendingCount} đơn hàng mới</strong> vừa được khách đặt đang ở trạng thái <strong className="text-amber-800">Chờ xử lý</strong>. Hãy nhắc Quản trị viên duyệt đơn ở màn hình admin để chuyển trạng thái sang <strong className="text-[#00523b]">Đang chế biến</strong> thì bếp mới hiển thị nấu nướng nhé!
+                </div>
+              </div>
+            )}
+
+            {/* Aggregated Preparation list for active orders */}
+            {activeOrders.length > 0 && activeAggregatedItems.length > 0 && (
+              <div className="premium-card bg-white p-5 space-y-3.5 border-l-[6px] border-[#00523b] shadow-md">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <div className="space-y-0.5">
+                    <h5 className="font-black text-xs text-[#00523b] uppercase tracking-wider flex items-center gap-1.5">
+                      🍳 TỔNG HỢP MÓN CẦN CHUẨN BỊ ({activeAggregatedItems.length} món nhỏ)
+                    </h5>
+                    <p className="text-[10px] text-gray-500 font-semibold">Tập hợp nguyên liệu để bếp chế biến gộp một lượt</p>
+                  </div>
+                  <span className="text-[9px] font-black text-white bg-[#00523b] px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0">
+                    Nấu số lượng lớn
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {activeAggregatedItems.map(([name, qty]) => (
+                    <div key={name} className="flex justify-between items-center bg-[#00523b]/5 px-3 py-2.5 rounded-xl border border-[#00523b]/10">
+                      <span className="font-extrabold text-[#394013] leading-tight">{name}</span>
+                      <span className="font-black text-sm text-[#00523b] bg-white px-2.5 py-0.5 rounded-lg shadow-sm shrink-0 border border-[#00523b]/10">
+                        x{qty}
+                      </span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">HẸN GIAO</span>
-                      <h4 className="text-lg font-black text-amber-600 flex items-center justify-end gap-1">
-                        ⏱️ {order.receiveTime}
-                      </h4>
-                    </div>
-                  </div>
+                  ))}
+                </div>
+                <div className="text-[9.5px] text-[#394013]/70 font-semibold italic bg-[#fcfef1] p-2 rounded-lg border border-[#00523b]/5">
+                  💡 <strong>Nguyên tắc:</strong> Đầu bếp chuẩn bị toàn bộ số lượng gộp ở bảng trên trước. Sau đó xem danh sách từng đơn hàng chi tiết bên dưới để chia nhỏ đóng gói và dán đúng nhãn nhầm tránh sót!
+                </div>
+              </div>
+            )}
 
-                  {/* General metadata (No prices or finances, strictly security / focus) */}
-                  <div className="text-xs font-bold text-[#394013]/70 grid grid-cols-2 gap-2 bg-[#fffbd8]/20 p-2.5 rounded-xl">
-                    <div>📅 Ngày nhận: <span className="text-[#00523b]">{order.receiveDate.split('-').reverse().join('/')}</span></div>
-                    <div className="text-right">📦 Quy cách: <span className="text-[#00523b]">{order.portionsCount} hộp riêng</span></div>
-                    <div>🛵 Hình thức: <span className="text-[#00523b]">{order.deliveryMethod}</span></div>
-                    {order.notes && (
-                      <div className="col-span-2 border-t border-gray-100 pt-1.5 text-red-700 italic text-xs mt-1">
-                        📝 Ghi chú: &ldquo;{order.notes}&rdquo;
-                      </div>
-                    )}
-                  </div>
-
-                  {/* List of portions and meals (Big and legible) */}
-                  <div className="space-y-3">
-                    {order.portions.map((portionItems, pIdx) => (
-                      <div key={pIdx} className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-2">
-                        <span className="text-xs font-black text-[#00523b] uppercase tracking-wider block border-b border-gray-200/50 pb-1">
-                          🍱 Hộp Số {pIdx + 1}
-                        </span>
-                        <ul className="space-y-2 pl-1">
-                          {portionItems.map(item => (
-                            <li key={item.id} className="text-base font-extrabold text-[#394013] flex justify-between">
-                              <span>• {item.name}</span>
-                              <span className="text-xl font-black text-[#00523b] bg-[#00523b]/10 px-2.5 py-0.5 rounded-lg shrink-0">
-                                x{item.qty}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Gigantic green [ĐÃ XONG] button */}
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => handleMarkDone(order.id)}
-                    className="w-full py-4.5 bg-[#00523b] hover:bg-[#004230] text-[#fffbd8] font-black rounded-xl shadow-lg transition duration-150 flex items-center justify-center gap-2 cursor-pointer text-lg tracking-wider"
+            {activeOrders.length === 0 ? (
+              <div className="bg-[#fcfef1] p-10 rounded-2xl border border-[#00523b]/10 text-center text-[#394013]/60 font-bold text-sm">
+                🧑‍🍳 Bếp đã thảnh thơi! Hiện không có đơn hàng nào cần chế biến.
+                <p className="text-xs font-medium text-[#394013]/40 mt-1">Các đơn hàng mới được admin phê duyệt sẽ tự động xuất hiện ở đây.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {activeOrders.map(order => (
+                  <motion.div
+                    key={order.id}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white rounded-2xl border-l-8 border-[#00523b] shadow-md p-5 space-y-4"
                   >
-                    <CheckCircle size={22} strokeWidth={2.5} /> ĐỒNG Ý ĐÃ XONG
-                  </motion.button>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                    {/* Big Headings */}
+                    <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+                      <div>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">MÃ ĐƠN HÀNG</span>
+                        <h4 className="text-xl font-black text-[#00523b] tracking-tight">{order.id}</h4>
+                        <span className="text-[10px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded block w-fit mt-1">
+                          Đang chế biến ⏱️
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">HẸN GIAO</span>
+                        <h4 className="text-lg font-black text-amber-600">
+                          ⏱️ {order.receiveTime}
+                        </h4>
+                        <span className="text-[10px] text-gray-400 block mt-1 font-bold">
+                          {order.session} ({order.receiveDate.split('-').reverse().join('/')})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* General metadata */}
+                    <div className="text-xs font-bold text-[#394013]/70 grid grid-cols-2 gap-2 bg-[#fffbd8]/20 p-2.5 rounded-xl border border-[#00523b]/5">
+                      <div>👤 Khách hàng: <span className="text-[#00523b] font-black">{order.customerName}</span></div>
+                      <div className="text-right">📞 SĐT: <span className="text-[#00523b] font-black">{order.phone}</span></div>
+                      <div>🛵 Hình thức: <span className="text-[#00523b] font-black">{order.deliveryMethod}</span></div>
+                      <div className="text-right">📦 Đóng gói: <span className="text-red-700 font-black">{order.portionsCount} Suất ăn riêng</span></div>
+                      {order.address && (
+                        <div className="col-span-2 border-t border-gray-200/40 pt-1 text-gray-600">
+                          📍 Địa chỉ: <span className="font-semibold">{order.address}</span>
+                        </div>
+                      )}
+                      {order.notes && (
+                        <div className="col-span-2 border-t border-gray-200/40 pt-1 text-red-700 italic">
+                          📝 Ghi chú: &ldquo;{order.notes}&rdquo;
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Portions packaging detailed list */}
+                    <div className="space-y-3">
+                      <div className="text-xs font-black text-[#00523b]/80 uppercase tracking-wider block">
+                        📦 CHI TIẾT ĐÓNG GÓI TỪNG SUẤT (Tích chọn để kiểm tra khi đóng hộp):
+                      </div>
+                      {order.portions.map((portionItems, pIdx) => {
+                        const itemsStr = portionItems.map(it => `${it.name} (x${it.qty})`).join(", ");
+                        return (
+                          <div key={pIdx} className="bg-gray-50 p-4 rounded-xl border border-gray-200/70 space-y-2.5">
+                            <div className="flex justify-between items-center border-b border-gray-200 pb-1.5">
+                              <span className="text-xs font-black text-[#00523b] uppercase tracking-wider">
+                                🍱 Suất Ăn {pIdx + 1} / {order.portionsCount}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => copyPortionLabelText(order, pIdx, itemsStr)}
+                                className="px-2 py-1 bg-[#00523b]/10 text-[#00523b] hover:bg-[#00523b] hover:text-white rounded text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                title="Sao chép thông tin nhãn để viết dán lên nắp hộp"
+                              >
+                                Copy Nhãn dán 🏷️
+                              </button>
+                            </div>
+                            <ul className="space-y-2 pl-1">
+                              {portionItems.map((item, itemIdx) => {
+                                const itemKey = `${item.id}-${itemIdx}`;
+                                const isChecked = !!checkedItems[`${order.id}-${pIdx}-${itemKey}`];
+                                return (
+                                  <li 
+                                    key={itemKey} 
+                                    onClick={() => toggleChecked(order.id, pIdx, itemKey)}
+                                    className={`text-sm font-extrabold flex justify-between items-center cursor-pointer p-1.5 rounded hover:bg-gray-200/50 transition select-none ${
+                                      isChecked ? 'line-through text-gray-400 opacity-60' : 'text-[#394013]'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={isChecked}
+                                        onChange={() => {}} // handled by click of parent li
+                                        className="w-4 h-4 rounded cursor-pointer accent-[#00523b] shrink-0 pointer-events-none" 
+                                      />
+                                      <span>{item.name}</span>
+                                    </span>
+                                    <span className={`text-xs font-black px-2 py-0.5 rounded-lg shrink-0 ${
+                                      isChecked ? 'bg-gray-200 text-gray-500' : 'bg-[#00523b]/10 text-[#00523b]'
+                                    }`}>
+                                      x{item.qty}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Gigantic green [ĐÃ XONG] button */}
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="text-[10px] text-center text-[#394013]/60 font-semibold mb-2">
+                        * Đảm bảo đã đóng đủ {order.portionsCount} suất ăn và dán ghi chú chính xác trước khi báo xong!
+                      </p>
+                      <motion.button
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => handleMarkDone(order.id)}
+                        className="w-full py-4 bg-[#00523b] hover:bg-[#004230] text-[#fffbd8] font-black rounded-xl shadow-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer text-base tracking-wider"
+                      >
+                        <CheckCircle size={20} strokeWidth={2.5} /> HOÀN TẤT &amp; GỬI GIAO 🛵
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Tab 2: Aggregate production summary / shopping plan */}
       {subTab === 'summary' && (

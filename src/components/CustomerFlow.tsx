@@ -32,6 +32,7 @@ import {
   SHOP_PHONE 
 } from "../utils/storage";
 import { sendToGoogleSheets } from "../utils/googleSheets";
+import { loadTextConfig } from "../utils/textConfig";
 
 interface CustomerFlowProps {
   onBackToHome: () => void;
@@ -44,6 +45,7 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cutoffInfo, setCutoffInfo] = useState(() => getEarliestOrderDate());
+  const [textConfig, setTextConfig] = useState(() => loadTextConfig());
 
   // Step state: 'init' | 'form' | 'menu' | 'confirm' | 'success'
   const [step, setStep] = useState<'init' | 'form' | 'menu' | 'confirm'>('init');
@@ -79,6 +81,7 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
     const info = getEarliestOrderDate();
     setCutoffInfo(info);
     setReceiveDate(info.minDate);
+    setTextConfig(loadTextConfig());
   }, []);
 
   // Handle Delivery Date validation (Micro-interaction)
@@ -287,38 +290,65 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
             animate={{ scale: 1, opacity: 1 }}
             className="mb-8 flex flex-col items-center"
           >
-            <div className="w-24 h-24 bg-[#00523b] rounded-full flex items-center justify-center mb-4 shadow-md text-[#fffbd8] font-bold text-4xl">
-              🍱
+            <div className="w-24 h-24 bg-[#00523b] rounded-full flex items-center justify-center mb-4 shadow-md text-[#fffbd8] font-bold text-4xl overflow-hidden shrink-0">
+              {(textConfig.homeRoundLogo.startsWith("http") || textConfig.homeRoundLogo.startsWith("/") || textConfig.homeRoundLogo.startsWith("data:")) ? (
+                <img 
+                  src={textConfig.homeRoundLogo} 
+                  alt="App Logo" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span>{textConfig.homeRoundLogo}</span>
+              )}
             </div>
             <h2 className="text-3xl font-extrabold tracking-tight text-[#00523b] mb-2 font-sans">
-              PaPiMeal
+              {textConfig.appName}
             </h2>
             <p className="text-sm text-[#394013]/80 italic font-medium max-w-sm">
-              &ldquo;Đặt trước món ăn cho ngày mai - Thảnh thơi thưởng thức bữa trưa lành mạnh&rdquo;
+              &ldquo;{textConfig.slogan}&rdquo;
             </p>
           </motion.div>
 
           {/* Value Props Grid */}
           <div className="grid grid-cols-1 gap-4 mb-8 text-left">
             <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm flex gap-3">
-              <span className="text-2xl mt-0.5">👥</span>
+              <div className="text-2xl mt-0.5 shrink-0 w-8 h-8 flex items-center justify-center overflow-hidden">
+                {(textConfig.valueProp1Icon.startsWith("http") || textConfig.valueProp1Icon.startsWith("/") || textConfig.valueProp1Icon.startsWith("data:")) ? (
+                  <img src={textConfig.valueProp1Icon} className="w-full h-full object-contain" referrerPolicy="no-referrer" alt="icon" />
+                ) : (
+                  <span>{textConfig.valueProp1Icon}</span>
+                )}
+              </div>
               <div>
-                <h4 className="font-bold text-[#394013] text-sm">Đặt Món Theo Từng Khẩu Phần</h4>
-                <p className="text-xs text-[#394013]/75 mt-0.5">Đặt nhóm tiện lợi, bóc tách hóa đơn rõ ràng theo từng người ăn.</p>
+                <h4 className="font-bold text-[#394013] text-sm">{textConfig.valueProp1Title}</h4>
+                <p className="text-xs text-[#394013]/75 mt-0.5">{textConfig.valueProp1Desc}</p>
               </div>
             </div>
             <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm flex gap-3">
-              <span className="text-2xl mt-0.5">⏰</span>
+              <div className="text-2xl mt-0.5 shrink-0 w-8 h-8 flex items-center justify-center overflow-hidden">
+                {(textConfig.valueProp2Icon.startsWith("http") || textConfig.valueProp2Icon.startsWith("/") || textConfig.valueProp2Icon.startsWith("data:")) ? (
+                  <img src={textConfig.valueProp2Icon} className="w-full h-full object-contain" referrerPolicy="no-referrer" alt="icon" />
+                ) : (
+                  <span>{textConfig.valueProp2Icon}</span>
+                )}
+              </div>
               <div>
-                <h4 className="font-bold text-[#394013] text-sm">Chuẩn Bị Chỉ Chu Chu Đáo</h4>
-                <p className="text-xs text-[#394013]/75 mt-0.5">Chốt nguyên liệu tươi ngon lúc 14h00 hàng ngày, tuyệt đối vệ sinh.</p>
+                <h4 className="font-bold text-[#394013] text-sm">{textConfig.valueProp2Title}</h4>
+                <p className="text-xs text-[#394013]/75 mt-0.5">{textConfig.valueProp2Desc}</p>
               </div>
             </div>
             <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm flex gap-3">
-              <span className="text-2xl mt-0.5">🚀</span>
+              <div className="text-2xl mt-0.5 shrink-0 w-8 h-8 flex items-center justify-center overflow-hidden">
+                {(textConfig.valueProp3Icon.startsWith("http") || textConfig.valueProp3Icon.startsWith("/") || textConfig.valueProp3Icon.startsWith("data:")) ? (
+                  <img src={textConfig.valueProp3Icon} className="w-full h-full object-contain" referrerPolicy="no-referrer" alt="icon" />
+                ) : (
+                  <span>{textConfig.valueProp3Icon}</span>
+                )}
+              </div>
               <div>
-                <h4 className="font-bold text-[#394013] text-sm">Tra Cứu Trực Quan Realtime</h4>
-                <p className="text-xs text-[#394013]/75 mt-0.5">Xem tiến trình chế biến món ăn từ bếp của PaPiMeal bất cứ lúc nào.</p>
+                <h4 className="font-bold text-[#394013] text-sm">{textConfig.valueProp3Title}</h4>
+                <p className="text-xs text-[#394013]/75 mt-0.5">{textConfig.valueProp3Desc}</p>
               </div>
             </div>
           </div>
@@ -354,7 +384,10 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
             >
               <ArrowLeft size={20} />
             </button>
-            <h3 className="text-lg font-bold text-[#00523b] font-sans">Thông Tin Người Nhận</h3>
+            <div>
+              <h3 className="text-base font-black text-[#00523b] font-sans leading-tight">{textConfig.step1Title}</h3>
+              <p className="text-[10px] text-[#394013]/60 font-medium leading-normal mt-0.5">{textConfig.step1Sub}</p>
+            </div>
           </div>
 
           <AnimatePresence>
