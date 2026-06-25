@@ -1,0 +1,6 @@
+{
+  "name": "PaPiMeal",
+  "description": "Hệ thống đặt món ăn trước dành cho dân văn phòng với tính năng quản lý khẩu phần, tra cứu đơn hàng, màn hình bếp và kế hoạch đi chợ tự động.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
