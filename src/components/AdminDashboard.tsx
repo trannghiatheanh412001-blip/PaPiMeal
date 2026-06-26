@@ -53,9 +53,18 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [loggedInRole, setLoggedInRole] = useState<"ADMIN" | "KITCHEN" | "PACKER" | "SHIPPER" | null>(null);
+  const [loggedInName, setLoggedInName] = useState("");
 
-  // Subtab navigation: 'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets'
-  const [activeTab, setActiveTab] = useState<'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets'>('products');
+  // Subtab navigation: 'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets' | 'accounts'
+  const [activeTab, setActiveTab] = useState<'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets' | 'accounts'>('products');
+
+  // Staff accounts management state
+  const [accountsList, setAccountsList] = useState<any[]>([]);
+  const [newAccName, setNewAccName] = useState("");
+  const [newAccPhone, setNewAccPhone] = useState("");
+  const [newAccPassword, setNewAccPassword] = useState("");
+  const [newAccRole, setNewAccRole] = useState<"ADMIN" | "KITCHEN" | "PACKER" | "SHIPPER">("PACKER");
 
   // Google Sheets state
   const [sheetUrl, setSheetUrl] = useState(() => getGoogleSheetsUrl());
@@ -118,14 +127,29 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
 
   useEffect(() => {
     const saved = sessionStorage.getItem("papimeal_admin_logged");
+    const savedRole = sessionStorage.getItem("papimeal_admin_role");
+    const savedName = sessionStorage.getItem("papimeal_admin_name");
+
     if (saved === "true") {
       setIsLoggedIn(true);
+      if (savedRole) {
+        setLoggedInRole(savedRole as any);
+        // Direct default tabs depending on role
+        if (savedRole === "SHIPPER") {
+          setActiveTab("orders");
+        } else if (savedRole === "PACKER") {
+          setActiveTab("orders");
+        }
+      }
+      if (savedName) setLoggedInName(savedName);
     }
     setProducts(loadProducts());
     setCategories(loadCategories());
 
-    // Load admin & kitchen credentials
     const accs = loadAccounts();
+    setAccountsList(accs);
+
+    // Load admin & kitchen credentials
     const adminAcc = accs.find(a => a.role === "ADMIN");
     const kitchenAcc = accs.find(a => a.role === "KITCHEN");
     if (adminAcc) {
@@ -141,20 +165,36 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanPhone = phone.trim();
-    const account = loadAccounts().find(a => a.phone === cleanPhone && a.password === password);
+    const accounts = loadAccounts();
+    const account = accounts.find(a => a.phone === cleanPhone && a.password === password);
     
-    if (account && account.role === "ADMIN") {
+    if (account) {
       setIsLoggedIn(true);
+      setLoggedInRole(account.role);
+      setLoggedInName(account.name);
       sessionStorage.setItem("papimeal_admin_logged", "true");
+      sessionStorage.setItem("papimeal_admin_role", account.role);
+      sessionStorage.setItem("papimeal_admin_name", account.name);
       setLoginError("");
+
+      // Adjust activeTab automatically based on role
+      if (account.role === "SHIPPER" || account.role === "PACKER") {
+        setActiveTab("orders");
+      } else {
+        setActiveTab("products");
+      }
     } else {
-      setLoginError("❌ Sai thông tin đăng nhập Quản trị viên!");
+      setLoginError("❌ Sai thông tin đăng nhập hoặc bạn không có tài khoản nhân sự!");
     }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setLoggedInRole(null);
+    setLoggedInName("");
     sessionStorage.removeItem("papimeal_admin_logged");
+    sessionStorage.removeItem("papimeal_admin_role");
+    sessionStorage.removeItem("papimeal_admin_name");
     setPhone("");
     setPassword("");
   };
@@ -558,13 +598,14 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
     if (currentStatus === "Chờ xử lý") nextStatus = "Đang chế biến";
     else if (currentStatus === "Đang chế biến") nextStatus = "Bếp đã chuẩn bị xong";
     else if (currentStatus === "Bếp đã chuẩn bị xong") nextStatus = "Chờ nhận hàng/giao hàng";
-    else if (currentStatus === "Chờ nhận hàng/giao hàng") nextStatus = "Hoàn tất";
+    else if (currentStatus === "Chờ nhận hàng/giao hàng") nextStatus = "Đang giao";
+    else if (currentStatus === "Đang giao") nextStatus = "Hoàn tất";
 
     if (!nextStatus) return;
 
     const updated = orders.map(o => {
       if (o.id === orderId) {
-        addStatusLog(orderId, currentStatus, nextStatus, "Quản trị viên");
+        addStatusLog(orderId, currentStatus, nextStatus, loggedInName || "Quản trị viên");
         const updatedOrder = { ...o, status: nextStatus as any };
         sendToGoogleSheets("UPDATE_STATUS", updatedOrder);
         return updatedOrder;
@@ -599,8 +640,17 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   // Filtered orders list for the tabular date-status view
   const filteredOrders = orders.filter(o => {
     const matchesDate = o.receiveDate === orderFilterDate;
+    
+    // Role-specific status filters
+    let matchesRole = true;
+    if (loggedInRole === "SHIPPER") {
+      matchesRole = ["Bếp đã chuẩn bị xong", "Chờ nhận hàng/giao hàng", "Đang giao", "Hoàn tất"].includes(o.status);
+    } else if (loggedInRole === "PACKER") {
+      matchesRole = ["Đang chế biến", "Bếp đã chuẩn bị xong", "Chờ nhận hàng/giao hàng", "Đang giao", "Hoàn tất"].includes(o.status);
+    }
+
     const matchesStatus = orderFilterStatus ? o.status === orderFilterStatus : true;
-    return matchesDate && matchesStatus;
+    return matchesDate && matchesRole && matchesStatus;
   });
 
   // Calculate matching stats
@@ -737,7 +787,12 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
       <div className="flex justify-between items-center bg-[#00523b] text-[#fffbd8] p-3 px-4 rounded-2xl shadow-sm">
         <div className="flex items-center gap-2">
           <ShieldCheck size={18} />
-          <span className="font-extrabold text-sm font-sans tracking-tight">HỆ THỐNG QUẢN TRỊ ⚙️</span>
+          <div className="text-left">
+            <span className="font-extrabold text-xs block leading-tight font-sans tracking-tight">HỆ THỐNG VẬN HÀNH PAPI ⚙️</span>
+            <span className="text-[9px] font-bold text-amber-300 block leading-none">
+              Chào {loggedInName || "Chủ Quán"} ({loggedInRole === "ADMIN" ? "Chủ Quán / Admin 👑" : (loggedInRole === "PACKER" ? "Đóng Gói 📦" : "Shipper Giao Hàng 🛵")})
+            </span>
+          </div>
         </div>
         <button
           onClick={handleLogout}
@@ -747,56 +802,78 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         </button>
       </div>
 
-      {/* Admin Nav Tabs */}
-      <div className="grid grid-cols-6 gap-0.5 bg-[#00523b]/5 p-1 rounded-xl">
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
-            activeTab === 'products' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
-          }`}
-        >
-          📋 Menu
-        </button>
-        <button
-          onClick={() => setActiveTab('add')}
-          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
-            activeTab === 'add' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
-          }`}
-        >
-          ➕ Thêm
-        </button>
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
-            activeTab === 'orders' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
-          }`}
-        >
-          🛒 Đơn
-        </button>
-        <button
-          onClick={() => setActiveTab('crm')}
-          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
-            activeTab === 'crm' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
-          }`}
-        >
-          👥 Khách
-        </button>
-        <button
-          onClick={() => setActiveTab('production')}
-          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
-            activeTab === 'production' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
-          }`}
-        >
-          💰 Báo Cáo
-        </button>
-        <button
-          onClick={() => setActiveTab('sheets')}
-          className={`py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
-            activeTab === 'sheets' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70"
-          }`}
-        >
-          ⚙️ Cài Đặt
-        </button>
+      {/* Admin Nav Tabs (Dynamic based on Role) */}
+      <div className="flex flex-wrap gap-1 bg-[#00523b]/5 p-1 rounded-xl">
+        {loggedInRole === "ADMIN" && (
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'products' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            📋 Menu
+          </button>
+        )}
+        {loggedInRole === "ADMIN" && (
+          <button
+            onClick={() => setActiveTab('add')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'add' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            ➕ Thêm
+          </button>
+        )}
+        {(loggedInRole === "ADMIN" || loggedInRole === "PACKER" || loggedInRole === "SHIPPER") && (
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'orders' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            🛒 Đơn hàng
+          </button>
+        )}
+        {loggedInRole === "ADMIN" && (
+          <button
+            onClick={() => setActiveTab('crm')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'crm' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            👥 Khách
+          </button>
+        )}
+        {(loggedInRole === "ADMIN" || loggedInRole === "PACKER") && (
+          <button
+            onClick={() => setActiveTab('production')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'production' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            💰 Báo cáo
+          </button>
+        )}
+        {loggedInRole === "ADMIN" && (
+          <button
+            onClick={() => setActiveTab('sheets')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'sheets' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            ⚙️ Cài đặt
+          </button>
+        )}
+        {loggedInRole === "ADMIN" && (
+          <button
+            onClick={() => setActiveTab('accounts')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'accounts' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            👥 Nhân Sự
+          </button>
+        )}
       </div>
 
       {/* ======================= TAB 1: PRODUCT LIST ======================= */}
@@ -1128,14 +1205,15 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
               </p>
             ) : (
               filteredOrders.map(order => {
-                const canProgress = ["Chờ xử lý", "Đang chế biến", "Bếp đã chuẩn bị xong", "Chờ nhận hàng/giao hàng"].includes(order.status);
+                const canProgress = ["Chờ xử lý", "Đang chế biến", "Bếp đã chuẩn bị xong", "Chờ nhận hàng/giao hàng", "Đang giao"].includes(order.status);
                 const canCancel = order.status !== "Hoàn tất" && order.status !== STATUS_CANCEL;
 
                 let nextStatusLabel = "";
-                if (order.status === "Chờ xử lý") nextStatusLabel = "Duyệt & Nấu";
-                else if (order.status === "Đang chế biến") nextStatusLabel = "Báo bếp nấu xong";
-                else if (order.status === "Bếp đã chuẩn bị xong") nextStatusLabel = "Vận chuyển 🚚";
-                else if (order.status === "Chờ nhận hàng/giao hàng") nextStatusLabel = "Hoàn tất đơn 🟢";
+                if (order.status === "Chờ xử lý") nextStatusLabel = "Duyệt & Nấu ⏱️";
+                else if (order.status === "Đang chế biến") nextStatusLabel = "Đã nấu xong 🍳";
+                else if (order.status === "Bếp đã chuẩn bị xong") nextStatusLabel = "Đóng gói xong 📦";
+                else if (order.status === "Chờ nhận hàng/giao hàng") nextStatusLabel = "Bắt đầu giao 🛵";
+                else if (order.status === "Đang giao") nextStatusLabel = "Giao xong ✓ Hoàn tất";
 
                 return (
                   <div key={order.id} className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-3">
@@ -1770,14 +1848,26 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
 
                 <div>
                   <label className="block text-[11px] font-bold text-[#394013] mb-1">Logo tròn chính giữa trang chủ (Nhập emoji hoặc link ảnh):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.homeRoundLogo}
-                    onChange={e => setTextConfig(prev => ({ ...prev, homeRoundLogo: e.target.value }))}
-                    placeholder="Nhập emoji hoặc link hình ảnh (http...)"
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
-                  />
-                  <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Ví dụ: <code className="bg-gray-100 px-1 rounded">🍱</code> hoặc link ảnh</span>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={textConfig.homeRoundLogo}
+                      onChange={e => setTextConfig(prev => ({ ...prev, homeRoundLogo: e.target.value }))}
+                      placeholder="Nhập emoji hoặc link hình ảnh (http...)"
+                      className="flex-1 px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTextConfig(prev => ({ ...prev, homeRoundLogo: "/src/assets/images/papimeal_logo_1782435524190.jpg" }));
+                        alert("🎉 Đã chọn logo Bento PaPiMeal 🍱 mẫu! Hãy bấm nút [Lưu Toàn Bộ Cấu Hình 💾] ở bên dưới cùng để áp dụng nhé!");
+                      }}
+                      className="px-2.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] transition cursor-pointer shrink-0"
+                    >
+                      Sử dụng Logo PaPiMeal 🍱
+                    </button>
+                  </div>
+                  <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Bạn có thể dán link ảnh tùy ý, hoặc bấm nút màu cam ở trên để sử dụng ngay bức ảnh Logo Bento PaPiMeal 🍱 sắc nét được thiết kế riêng!</span>
                 </div>
               </div>
 
@@ -2150,6 +2240,51 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                   </div>
                 </div>
 
+                {/* ======================= GỢI Ý NÂNG CẤP PHÂN QUYỀN VẬN HÀNH BẾP ĐA NGƯỜI DÙNG ======================= */}
+                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 space-y-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="p-1 bg-amber-500 text-white rounded font-bold text-[10px] animate-pulse">✨ GỢI Ý NÂNG CẤP ĐA NGƯỜI DÙNG</span>
+                  </div>
+                  <h6 className="text-[11px] font-extrabold text-amber-900 leading-tight">
+                    Mô Hình Vận Hành Phân Quyền Giữa Bếp, Nhân Viên Đóng Gói (Packer) & Shipper
+                  </h6>
+                  <p className="text-[10px] text-amber-800/90 leading-relaxed">
+                    Khi quy mô của <b>Cơm Niêu PaPi</b> mở rộng, bạn sẽ có nhiều người sử dụng chung hệ thống cùng lúc. Đây là sơ đồ thiết kế đề xuất để tối ưu hóa quy trình đóng gói & giao hàng không sai sót:
+                  </p>
+                  
+                  <div className="space-y-2 pt-1 border-t border-amber-200/50">
+                    <div className="flex items-start gap-1.5 text-[10px]">
+                      <span className="text-amber-600 shrink-0 mt-0.5">👨‍🍳</span>
+                      <div>
+                        <strong className="text-amber-950 block">1. Vai Trò Bộ Phận Bếp (Kitchen Admin):</strong>
+                        <span className="text-amber-800/80">Chỉ xem danh sách món ăn cần nấu tổng hợp theo ngày (Màn hình Chế biến). Khi nấu xong món nào, đầu bếp nhấn <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Hoàn tất nấu"</span>, trạng thái món lập tức chuyển sang chờ đóng gói.</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-1.5 text-[10px]">
+                      <span className="text-amber-600 shrink-0 mt-0.5">📦</span>
+                      <div>
+                        <strong className="text-amber-950 block">2. Vai Trò Nhân Viên Xếp Đơn & Đóng Gói (Packer):</strong>
+                        <span className="text-amber-800/80">Sử dụng màn hình riêng để quét mã đơn hoặc xem danh sách các đơn đã chuẩn bị đầy đủ món. Packer xếp bento vào túi kèm hóa đơn, gạt trạng thái đơn sang <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Đã đóng gói - Chờ giao"</span>.</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-1.5 text-[10px]">
+                      <span className="text-amber-600 shrink-0 mt-0.5">🚴</span>
+                      <div>
+                        <strong className="text-amber-950 block">3. Vai Trò Shipper (Người giao hàng):</strong>
+                        <span className="text-amber-800/80">Truy cập giao diện đơn giản trên điện thoại, chỉ hiển thị danh sách địa chỉ cần giao của hôm nay. Shipper nhận đơn đi giao, cập nhật <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Đang giao"</span> và <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Giao thành công"</span> để báo cáo doanh thu tức thời.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-amber-200/50 bg-amber-500/5 p-2 rounded-lg text-[9px] text-amber-900 leading-relaxed">
+                    <p className="font-extrabold uppercase text-amber-950 mb-1">🛠️ Cách tích hợp thực tế:</p>
+                    <p>• <b>Đồng bộ dữ liệu thời gian thực:</b> Nâng cấp từ LocalStorage lên cơ sở dữ liệu đám mây <b>Firebase Firestore</b> để mọi người dùng cập nhật trạng thái đơn tức thời (Real-time) không bị trễ.</p>
+                    <p>• <b>Tạo tài khoản riêng:</b> Sử dụng <b>Firebase Authentication</b> để cấp tài khoản Email/Mật khẩu riêng cho từng nhân viên, ghi nhận chính xác ai là người đã nấu, người đóng gói, người giao đơn để hạn chế thất thoát hàng hóa.</p>
+                  </div>
+                </div>
+
                 <div className="border-t border-gray-100 pt-3 space-y-2">
                   <span className="text-[10px] bg-purple-100 px-1.5 py-0.5 rounded font-bold text-purple-800 block w-fit">💡 Hướng Dẫn Trải Nghiệm Demo (Hộp màu vàng chân trang)</span>
                   <div>
@@ -2220,6 +2355,165 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
               <pre className="p-3 bg-gray-900 text-[#fffbd8] rounded-b-lg text-[9px] font-mono overflow-x-auto max-h-48 leading-relaxed whitespace-pre">
                 {APPS_SCRIPT_TEMPLATE}
               </pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB 7: STAFF ACCOUNTS MANAGEMENT ======================= */}
+      {activeTab === 'accounts' && loggedInRole === 'ADMIN' && (
+        <div className="space-y-4">
+          <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-4">
+            <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5 uppercase tracking-wider">
+              👥 QUẢN LÝ TÀI KHOẢN NHÂN SỰ
+            </h4>
+            <p className="text-xs text-[#394013]/80 leading-relaxed font-medium">
+              Bạn có thể tự tạo tài khoản (SĐT và Mật khẩu) để cung cấp cho từng nhân viên (Bếp, Nhân viên đóng gói, Shipper). 
+              Nhân viên sẽ sử dụng SĐT và mật khẩu này để đăng nhập vào đúng màn hình làm việc của họ.
+            </p>
+
+            {/* Form thêm tài khoản mới */}
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newAccPhone.trim() || !newAccPassword.trim() || !newAccName.trim()) {
+                  alert("❌ Vui lòng nhập đầy đủ thông tin: SĐT, Mật khẩu và Tên nhân viên!");
+                  return;
+                }
+                const phoneClean = newAccPhone.trim().replace(/\D/g, "");
+                const exist = accountsList.find(a => a.phone === phoneClean);
+                if (exist) {
+                  alert(`❌ SĐT ${newAccPhone} đã được dùng cho tài khoản "${exist.name}". Hãy dùng SĐT khác!`);
+                  return;
+                }
+                const updatedList = [
+                  ...accountsList,
+                  {
+                    phone: phoneClean,
+                    password: newAccPassword.trim(),
+                    role: newAccRole,
+                    name: newAccName.trim()
+                  }
+                ];
+                setAccountsList(updatedList);
+                saveAccounts(updatedList);
+                // Clear inputs
+                setNewAccPhone("");
+                setNewAccPassword("");
+                setNewAccName("");
+                alert("🎉 Đã thêm tài khoản nhân sự mới thành công!");
+              }}
+              className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3"
+            >
+              <span className="text-[10px] uppercase tracking-widest bg-[#00523b]/10 text-[#00523b] px-2.5 py-1 rounded-full font-extrabold block w-fit">
+                ➕ Thêm tài khoản mới
+              </span>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Tên nhân viên / Bộ phận *</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Anh Quân (Shipper Q1)"
+                    value={newAccName}
+                    onChange={e => setNewAccName(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Số điện thoại (dùng làm Tài khoản) *</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 0922333444"
+                    value={newAccPhone}
+                    onChange={e => setNewAccPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Mật khẩu đăng nhập *</label>
+                  <input
+                    type="text"
+                    placeholder="Nhập mật khẩu dễ nhớ"
+                    value={newAccPassword}
+                    onChange={e => setNewAccPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 mb-0.5">Vai trò vận hành *</label>
+                  <select
+                    value={newAccRole}
+                    onChange={e => setNewAccRole(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium cursor-pointer"
+                  >
+                    <option value="ADMIN">Chủ quán (Toàn quyền Admin) 👑</option>
+                    <option value="KITCHEN">Đầu bếp (Chỉ xem bếp nấu) 👨‍🍳</option>
+                    <option value="PACKER">Nhân viên Đóng Gói đơn hàng 📦</option>
+                    <option value="SHIPPER">Shipper Giao hàng 🛵</option>
+                  </select>
+                </div>
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-bold rounded-lg text-xs shadow-sm transition cursor-pointer"
+              >
+                Cấp Tài Khoản Nhân Viên 👤
+              </button>
+            </form>
+
+            {/* Danh sách tài khoản hiện có */}
+            <div className="space-y-2.5 pt-2">
+              <span className="text-[10px] uppercase tracking-widest text-[#394013]/60 font-black block">
+                👥 DANH SÁCH TÀI KHOẢN HIỆN TẠI ({accountsList.length})
+              </span>
+              
+              <div className="grid grid-cols-1 gap-2">
+                {accountsList.map((acc, idx) => (
+                  <div key={acc.phone} className="bg-white border border-gray-200/80 p-3.5 rounded-xl flex justify-between items-center shadow-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-extrabold text-sm text-[#00523b]">{acc.name}</span>
+                        <span className={`text-[8.5px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                          acc.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                          acc.role === 'KITCHEN' ? 'bg-amber-100 text-amber-800' :
+                          acc.role === 'PACKER' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {acc.role === 'ADMIN' ? 'Chủ quán' :
+                           acc.role === 'KITCHEN' ? 'Tổ Bếp' :
+                           acc.role === 'PACKER' ? 'Đóng Gói' : 'Shipper'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 font-semibold space-y-0.5">
+                        <p>📞 SĐT (Tài khoản): <strong className="text-gray-800">{acc.phone}</strong></p>
+                        <p>🔑 Mật khẩu: <strong className="text-gray-800 font-mono bg-gray-50 px-1 py-0.5 rounded border border-gray-100 text-[11px]">{acc.password}</strong></p>
+                      </div>
+                    </div>
+                    
+                    {/* Nút xóa tài khoản - không cho xóa tài khoản gốc/admin hiện tại */}
+                    {acc.phone !== "0901464021" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Bạn có chắc muốn XÓA tài khoản của "${acc.name}" không?`)) {
+                            const updatedList = accountsList.filter(a => a.phone !== acc.phone);
+                            setAccountsList(updatedList);
+                            saveAccounts(updatedList);
+                            alert("🗑️ Đã xóa tài khoản thành công!");
+                          }
+                        }}
+                        className="p-2 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 transition text-[10px] font-bold cursor-pointer border border-red-200"
+                        title="Xóa tài khoản"
+                      >
+                        Xóa 🗑️
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-bold text-gray-400 italic">Mặc định 🔒</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

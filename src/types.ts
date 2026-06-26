@@ -43,7 +43,7 @@ export interface Order {
   deliveryMethod: "Ghé lấy" | "Giao hàng";
   address: string;
   notes: string;
-  status: "Chờ xử lý" | "Đang chế biến" | "Bếp đã chuẩn bị xong" | "Chờ nhận hàng/giao hàng" | "Hoàn tất" | "Đã Hủy";
+  status: "Chờ xử lý" | "Đang chế biến" | "Bếp đã chuẩn bị xong" | "Chờ nhận hàng/giao hàng" | "Đang giao" | "Hoàn tất" | "Đã Hủy";
   portionsCount: number;
   portions: PortionItem[][]; // array of portions, each portion contains selected items
   totalAmount: number;

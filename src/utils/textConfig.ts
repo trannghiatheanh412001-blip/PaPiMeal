@@ -88,7 +88,7 @@ export function loadTextConfig(): AppTextConfig {
     step1Title: localStorage.getItem(CONFIG_KEYS.STEP1_TITLE) || "Chọn Số Lượng & Hẹn Giờ Giao",
     step1Sub: localStorage.getItem(CONFIG_KEYS.STEP1_SUB) || "Đặt bao nhiêu suất cho nhóm? Bếp sẽ nấu đúng định lượng & chuẩn bị đóng hộp riêng rẽ từng phần cơm cho bạn!",
     headerLogo: localStorage.getItem(CONFIG_KEYS.HEADER_LOGO) || "P",
-    homeRoundLogo: localStorage.getItem(CONFIG_KEYS.HOME_ROUND_LOGO) || "🍱",
+    homeRoundLogo: localStorage.getItem(CONFIG_KEYS.HOME_ROUND_LOGO) || "/src/assets/images/papimeal_logo_1782435524190.jpg",
     homeBannerImage: localStorage.getItem(CONFIG_KEYS.HOME_BANNER_IMAGE) || "🥗",
     valueProp1Icon: localStorage.getItem(CONFIG_KEYS.VP1_ICON) || "👥",
     valueProp1Title: localStorage.getItem(CONFIG_KEYS.VP1_TITLE) || "Đặt Món Theo Từng Khẩu Phần",

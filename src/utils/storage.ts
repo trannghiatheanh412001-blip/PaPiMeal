@@ -13,14 +13,16 @@ export const SHOP_PHONE = "0901 464 021";
 export interface Account {
   phone: string;
   password: string;
-  role: "ADMIN" | "KITCHEN";
+  role: "ADMIN" | "KITCHEN" | "PACKER" | "SHIPPER";
   name: string;
 }
 
 const ACCOUNTS_KEY = "papimeal_accounts";
 const DEFAULT_ACCOUNTS: Account[] = [
-  { phone: "0901464021", password: "KHOINGHIEP", role: "ADMIN", name: "Quản trị" },
-  { phone: "0917106326", password: "THANHCONG", role: "KITCHEN", name: "Bếp" }
+  { phone: "0901464021", password: "KHOINGHIEP", role: "ADMIN", name: "Chủ Quán PaPi" },
+  { phone: "0917106326", password: "THANHCONG", role: "KITCHEN", name: "Bếp Trưởng PaPi" },
+  { phone: "0922222222", password: "DONGGOI", role: "PACKER", name: "Nhân viên Đóng Gói" },
+  { phone: "0933333333", password: "GIAOHANG", role: "SHIPPER", name: "Shipper Giao Hàng" }
 ];
 
 export function loadAccounts(): Account[] {
@@ -48,6 +50,7 @@ export const STATUS_FLOW = [
   "Đang chế biến",
   "Bếp đã chuẩn bị xong",
   "Chờ nhận hàng/giao hàng",
+  "Đang giao",
   "Hoàn tất"
 ];
 

@@ -1,0 +1,17 @@
+{
+  "short_name": "PaPiMeal",
+  "name": "PaPiMeal - Dinh Dưỡng Mỗi Ngày",
+  "icons": [
+    {
+      "src": "/src/assets/images/papimeal_logo_1782435524190.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#00523b",
+  "theme_color": "#00523b",
+  "display": "standalone",
+  "orientation": "portrait"
+}
