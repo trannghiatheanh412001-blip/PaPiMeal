@@ -41,6 +41,7 @@ import {
 } from "../utils/storage";
 import { loadTextConfig, saveTextConfig } from "../utils/textConfig";
 import { sendToGoogleSheets, getGoogleSheetsUrl, saveGoogleSheetsUrl, APPS_SCRIPT_TEMPLATE } from "../utils/googleSheets";
+import { syncConfigToFirestore } from "../utils/firebaseSync";
 
 interface AdminDashboardProps {
   onBackToHome: () => void;
@@ -1783,6 +1784,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                     return;
                   }
                   localStorage.setItem("papimeal_admin_email", val);
+                  syncConfigToFirestore();
                   alert("🎉 Đã lưu email thông báo đơn hàng: " + (val || "(Trống - Tắt thông báo)") + "!");
                 }}
                 className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-xs shadow-sm transition cursor-pointer"

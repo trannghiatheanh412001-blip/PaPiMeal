@@ -1,5 +1,16 @@
-import { Product, Category, Order, StatusLog } from "../types";
+import { Product, Category, Order, StatusLog, Account } from "../types";
 import { DEFAULT_PRODUCTS, DEFAULT_CATEGORIES } from "../data/defaults";
+import { 
+  syncOrderToFirestore, 
+  deleteOrderFromFirestore,
+  syncProductToFirestore,
+  deleteProductFromFirestore,
+  syncCategoryToFirestore,
+  deleteCategoryFromFirestore,
+  syncAccountToFirestore,
+  deleteAccountFromFirestore,
+  syncLogToFirestore
+} from "./firebaseSync";
 
 const PRODUCTS_KEY = "papimeal_products";
 const CATEGORIES_KEY = "papimeal_categories";
@@ -9,13 +20,6 @@ const LOGS_KEY = "papimeal_logs";
 export const CUTOFF_HOUR = 14;
 export const SHOP_ADDRESS = "16B Trần Văn Thành, Phường Chánh Hưng, Quận 8";
 export const SHOP_PHONE = "0901 464 021";
-
-export interface Account {
-  phone: string;
-  password: string;
-  role: "ADMIN" | "KITCHEN" | "PACKER" | "SHIPPER";
-  name: string;
-}
 
 const ACCOUNTS_KEY = "papimeal_accounts";
 const DEFAULT_ACCOUNTS: Account[] = [
@@ -40,6 +44,21 @@ export function loadAccounts(): Account[] {
 
 export function saveAccounts(accounts: Account[]) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  accounts.forEach(acc => {
+    syncAccountToFirestore(acc);
+  });
+  try {
+    const prevStr = localStorage.getItem("papimeal_accounts_prev");
+    if (prevStr) {
+      const prev: Account[] = JSON.parse(prevStr);
+      prev.forEach(a => {
+        if (!accounts.find(x => x.phone === a.phone)) {
+          deleteAccountFromFirestore(a.phone);
+        }
+      });
+    }
+  } catch (e) {}
+  localStorage.setItem("papimeal_accounts_prev", JSON.stringify(accounts));
 }
 
 // Kept for legacy backward compatibility
@@ -67,6 +86,21 @@ export function loadProducts(): Product[] {
 
 export function saveProducts(products: Product[]) {
   localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+  products.forEach(prod => {
+    syncProductToFirestore(prod);
+  });
+  try {
+    const prevStr = localStorage.getItem("papimeal_products_prev");
+    if (prevStr) {
+      const prev: Product[] = JSON.parse(prevStr);
+      prev.forEach(p => {
+        if (!products.find(x => x.id === p.id)) {
+          deleteProductFromFirestore(p.id);
+        }
+      });
+    }
+  } catch (e) {}
+  localStorage.setItem("papimeal_products_prev", JSON.stringify(products));
 }
 
 export function loadCategories(): Category[] {
@@ -80,6 +114,21 @@ export function loadCategories(): Category[] {
 
 export function saveCategories(categories: Category[]) {
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  categories.forEach(cat => {
+    syncCategoryToFirestore(cat);
+  });
+  try {
+    const prevStr = localStorage.getItem("papimeal_categories_prev");
+    if (prevStr) {
+      const prev: Category[] = JSON.parse(prevStr);
+      prev.forEach(c => {
+        if (!categories.find(x => x.id === c.id)) {
+          deleteCategoryFromFirestore(c.id);
+        }
+      });
+    }
+  } catch (e) {}
+  localStorage.setItem("papimeal_categories_prev", JSON.stringify(categories));
 }
 
 export function loadOrders(): Order[] {
@@ -92,6 +141,21 @@ export function loadOrders(): Order[] {
 
 export function saveOrders(orders: Order[]) {
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  orders.forEach(order => {
+    syncOrderToFirestore(order);
+  });
+  try {
+    const oldOrdersStr = localStorage.getItem("papimeal_orders_prev");
+    if (oldOrdersStr) {
+      const oldOrders: Order[] = JSON.parse(oldOrdersStr);
+      oldOrders.forEach(oldO => {
+        if (!orders.find(o => o.id === oldO.id)) {
+          deleteOrderFromFirestore(oldO.id);
+        }
+      });
+    }
+  } catch (e) {}
+  localStorage.setItem("papimeal_orders_prev", JSON.stringify(orders));
 }
 
 export function loadLogs(): StatusLog[] {
@@ -104,6 +168,9 @@ export function loadLogs(): StatusLog[] {
 
 export function saveLogs(logs: StatusLog[]) {
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+  logs.forEach(log => {
+    syncLogToFirestore(log);
+  });
 }
 
 export function addStatusLog(orderId: string, oldStatus: string, newStatus: string, updatedBy: string) {

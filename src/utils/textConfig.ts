@@ -1,3 +1,5 @@
+import { syncConfigToFirestore } from "./firebaseSync";
+
 const CONFIG_KEYS = {
   APP_NAME: "papimeal_cfg_app_name",
   SLOGAN: "papimeal_cfg_slogan",
@@ -158,4 +160,5 @@ export function saveTextConfig(config: AppTextConfig) {
   localStorage.setItem(CONFIG_KEYS.ROLE_ADMIN_SUB, config.roleAdminSub.trim());
   localStorage.setItem(CONFIG_KEYS.DEMO_GUIDE_TITLE, config.demoGuideTitle.trim());
   localStorage.setItem(CONFIG_KEYS.DEMO_GUIDE_TEXT, config.demoGuideText.trim());
+  syncConfigToFirestore();
 }

@@ -57,3 +57,11 @@ export interface StatusLog {
   updatedBy: string;
   timestamp: string;
 }
+
+export interface Account {
+  phone: string;
+  password: string;
+  role: "ADMIN" | "KITCHEN" | "PACKER" | "SHIPPER";
+  name: string;
+}
+

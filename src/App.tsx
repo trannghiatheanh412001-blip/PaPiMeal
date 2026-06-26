@@ -15,6 +15,7 @@ import {
 import { Order } from "./types";
 import { loadOrders, saveOrders, getEarliestOrderDate } from "./utils/storage";
 import { loadTextConfig } from "./utils/textConfig";
+import { initFirebaseSync, deleteAllOrdersFromFirestore, deleteAllLogsFromFirestore } from "./utils/firebaseSync";
 import CustomerFlow from "./components/CustomerFlow";
 import OrderTracking from "./components/OrderTracking";
 import KitchenDashboard from "./components/KitchenDashboard";
@@ -27,6 +28,13 @@ export default function App() {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [latestOrderId, setLatestOrderId] = useState("");
   const [textConfig, setTextConfig] = useState(() => loadTextConfig());
+
+  // Subscribe to real-time Firebase syncing on mount
+  useEffect(() => {
+    initFirebaseSync(() => {
+      setRefreshToggle(prev => !prev);
+    });
+  }, []);
 
   // Load orders on load & refresh
   useEffect(() => {
@@ -43,10 +51,18 @@ export default function App() {
     setView('success');
   };
 
-  const handleResetDemoData = () => {
+  const handleResetDemoData = async () => {
     if (window.confirm("Bạn có chắc muốn Reset toàn bộ đơn hàng hiện có để demo lại từ đầu không?")) {
       localStorage.removeItem("papimeal_orders");
       localStorage.removeItem("papimeal_logs");
+      
+      try {
+        await deleteAllOrdersFromFirestore();
+        await deleteAllLogsFromFirestore();
+      } catch (err) {
+        console.error("Error resetting Firestore collections:", err);
+      }
+      
       // Keep products & categories but reset orders
       triggerRefresh();
       alert("Đã reset dữ liệu đơn hàng thành công!");

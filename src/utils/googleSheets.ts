@@ -1,4 +1,5 @@
 import { Order } from "../types";
+import { syncConfigToFirestore } from "./firebaseSync";
 
 const GOOGLE_SHEETS_URL_KEY = "papimeal_google_sheet_url";
 
@@ -8,6 +9,7 @@ export function getGoogleSheetsUrl(): string {
 
 export function saveGoogleSheetsUrl(url: string) {
   localStorage.setItem(GOOGLE_SHEETS_URL_KEY, url.trim());
+  syncConfigToFirestore();
 }
 
 export async function sendToGoogleSheets(actionType: "NEW_ORDER" | "UPDATE_STATUS", order: Order) {
