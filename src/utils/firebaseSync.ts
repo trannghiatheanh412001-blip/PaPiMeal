@@ -5,8 +5,7 @@ import {
   setDoc, 
   deleteDoc, 
   onSnapshot, 
-  writeBatch,
-  getDoc
+  writeBatch
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Order, Product, Category, StatusLog, Account } from "../types";
@@ -19,8 +18,50 @@ const DEFAULT_ACCOUNTS: Account[] = [
   { phone: "0933333333", password: "GIAOHANG", role: "SHIPPER", name: "Shipper Giao Hàng" }
 ];
 
-// Helper to check if we are currently updating from remote to avoid infinite write loops
-let isSyncingFromRemote = false;
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: null,
+      email: null,
+      emailVerified: null,
+      isAnonymous: null,
+      tenantId: null,
+      providerInfo: []
+    },
+    operationType,
+    path
+  };
+  const jsonErrorString = JSON.stringify(errInfo);
+  console.error('Firestore Error: ', jsonErrorString);
+  throw new Error(jsonErrorString);
+}
 
 export function initFirebaseSync(onUpdate: () => void) {
   console.log("🔄 Starting real-time Firebase synchronization...");
@@ -28,14 +69,12 @@ export function initFirebaseSync(onUpdate: () => void) {
   // 1. SYNC CONFIG
   onSnapshot(doc(db, "config", "general"), async (snapshot) => {
     if (snapshot.exists()) {
-      isSyncingFromRemote = true;
       const data = snapshot.data();
       Object.entries(data).forEach(([key, val]) => {
         if (val !== undefined && val !== null) {
           localStorage.setItem(key, String(val));
         }
       });
-      isSyncingFromRemote = false;
       onUpdate();
     } else {
       // Seed default config
@@ -87,8 +126,14 @@ export function initFirebaseSync(onUpdate: () => void) {
         if (local) defaultConfig[key] = local;
       });
 
-      setDoc(doc(db, "config", "general"), defaultConfig);
+      try {
+        setDoc(doc(db, "config", "general"), defaultConfig);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, "config/general");
+      }
     }
+  }, (err) => {
+    handleFirestoreError(err, OperationType.GET, "config/general");
   });
 
   // 2. SYNC PRODUCTS
@@ -99,17 +144,20 @@ export function initFirebaseSync(onUpdate: () => void) {
       DEFAULT_PRODUCTS.forEach((prod) => {
         batch.set(doc(db, "products", prod.id), prod);
       });
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, "products");
+      }
     } else {
-      isSyncingFromRemote = true;
       const products: Product[] = [];
       snapshot.forEach((d) => products.push(d.data() as Product));
-      // Sort products by index/id or preserve custom order
       products.sort((a, b) => a.name.localeCompare(b.name));
       localStorage.setItem("papimeal_products", JSON.stringify(products));
-      isSyncingFromRemote = false;
       onUpdate();
     }
+  }, (err) => {
+    handleFirestoreError(err, OperationType.GET, "products");
   });
 
   // 3. SYNC CATEGORIES
@@ -120,16 +168,20 @@ export function initFirebaseSync(onUpdate: () => void) {
       DEFAULT_CATEGORIES.forEach((cat) => {
         batch.set(doc(db, "categories", cat.id), cat);
       });
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, "categories");
+      }
     } else {
-      isSyncingFromRemote = true;
       const categories: Category[] = [];
       snapshot.forEach((d) => categories.push(d.data() as Category));
       categories.sort((a, b) => a.name.localeCompare(b.name));
       localStorage.setItem("papimeal_categories", JSON.stringify(categories));
-      isSyncingFromRemote = false;
       onUpdate();
     }
+  }, (err) => {
+    handleFirestoreError(err, OperationType.GET, "categories");
   });
 
   // 4. SYNC ACCOUNTS
@@ -137,7 +189,6 @@ export function initFirebaseSync(onUpdate: () => void) {
     if (snapshot.empty) {
       console.log("🌱 Firestore 'accounts' is empty. Seeding defaults...");
       const batch = writeBatch(db);
-      // Try to load current local accounts first, fallback to DEFAULT_ACCOUNTS
       let localAccs = DEFAULT_ACCOUNTS;
       try {
         const local = localStorage.getItem("papimeal_accounts");
@@ -147,156 +198,142 @@ export function initFirebaseSync(onUpdate: () => void) {
       localAccs.forEach((acc) => {
         batch.set(doc(db, "accounts", acc.phone), acc);
       });
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, "accounts");
+      }
     } else {
-      isSyncingFromRemote = true;
       const accounts: Account[] = [];
       snapshot.forEach((d) => accounts.push(d.data() as Account));
       localStorage.setItem("papimeal_accounts", JSON.stringify(accounts));
-      isSyncingFromRemote = false;
       onUpdate();
     }
+  }, (err) => {
+    handleFirestoreError(err, OperationType.GET, "accounts");
   });
 
   // 5. SYNC LOGS
   onSnapshot(collection(db, "logs"), (snapshot) => {
-    isSyncingFromRemote = true;
     const logs: StatusLog[] = [];
     snapshot.forEach((d) => logs.push(d.data() as StatusLog));
-    // Sort logs by timestamp descending
     logs.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     localStorage.setItem("papimeal_logs", JSON.stringify(logs));
-    isSyncingFromRemote = false;
     onUpdate();
+  }, (err) => {
+    handleFirestoreError(err, OperationType.GET, "logs");
   });
 
   // 6. SYNC ORDERS (CRITICAL!)
   onSnapshot(collection(db, "orders"), (snapshot) => {
-    isSyncingFromRemote = true;
     const orders: Order[] = [];
     snapshot.forEach((d) => orders.push(d.data() as Order));
-    
-    // Sort orders by id descending or receiveDate
     orders.sort((a, b) => b.id.localeCompare(a.id));
-    
     localStorage.setItem("papimeal_orders", JSON.stringify(orders));
-    isSyncingFromRemote = false;
     console.log(`📥 Sync completed: loaded ${orders.length} orders from Firestore.`);
     onUpdate();
+  }, (err) => {
+    handleFirestoreError(err, OperationType.GET, "orders");
   });
 }
 
-// WRITES FORWARDING TO FIRESTORE
 export async function syncOrderToFirestore(order: Order) {
-  if (isSyncingFromRemote) return;
   try {
     await setDoc(doc(db, "orders", order.id), order);
     console.log(`📤 Order ${order.id} saved to Firestore.`);
   } catch (err) {
-    console.error("Error syncing order to Firestore:", err);
+    handleFirestoreError(err, OperationType.WRITE, `orders/${order.id}`);
   }
 }
 
 export async function deleteOrderFromFirestore(orderId: string) {
-  if (isSyncingFromRemote) return;
   try {
     await deleteDoc(doc(db, "orders", orderId));
     console.log(`🗑️ Order ${orderId} deleted from Firestore.`);
   } catch (err) {
-    console.error("Error deleting order from Firestore:", err);
+    handleFirestoreError(err, OperationType.DELETE, `orders/${orderId}`);
   }
 }
 
 export async function syncProductToFirestore(product: Product) {
-  if (isSyncingFromRemote) return;
   try {
     await setDoc(doc(db, "products", product.id), product);
   } catch (err) {
-    console.error("Error syncing product to Firestore:", err);
+    handleFirestoreError(err, OperationType.WRITE, `products/${product.id}`);
   }
 }
 
 export async function deleteProductFromFirestore(productId: string) {
-  if (isSyncingFromRemote) return;
   try {
     await deleteDoc(doc(db, "products", productId));
   } catch (err) {
-    console.error("Error deleting product from Firestore:", err);
+    handleFirestoreError(err, OperationType.DELETE, `products/${productId}`);
   }
 }
 
 export async function syncCategoryToFirestore(category: Category) {
-  if (isSyncingFromRemote) return;
   try {
     await setDoc(doc(db, "categories", category.id), category);
   } catch (err) {
-    console.error("Error syncing category to Firestore:", err);
+    handleFirestoreError(err, OperationType.WRITE, `categories/${category.id}`);
   }
 }
 
 export async function deleteCategoryFromFirestore(categoryId: string) {
-  if (isSyncingFromRemote) return;
   try {
     await deleteDoc(doc(db, "categories", categoryId));
   } catch (err) {
-    console.error("Error deleting category from Firestore:", err);
+    handleFirestoreError(err, OperationType.DELETE, `categories/${categoryId}`);
   }
 }
 
 export async function syncAccountToFirestore(account: Account) {
-  if (isSyncingFromRemote) return;
   try {
     await setDoc(doc(db, "accounts", account.phone), account);
   } catch (err) {
-    console.error("Error syncing account to Firestore:", err);
+    handleFirestoreError(err, OperationType.WRITE, `accounts/${account.phone}`);
   }
 }
 
 export async function deleteAccountFromFirestore(phone: string) {
-  if (isSyncingFromRemote) return;
   try {
     await deleteDoc(doc(db, "accounts", phone));
   } catch (err) {
-    console.error("Error deleting account from Firestore:", err);
+    handleFirestoreError(err, OperationType.DELETE, `accounts/${phone}`);
   }
 }
 
 export async function syncLogToFirestore(log: StatusLog) {
-  if (isSyncingFromRemote) return;
   try {
     await setDoc(doc(db, "logs", log.id), log);
   } catch (err) {
-    console.error("Error syncing log to Firestore:", err);
+    handleFirestoreError(err, OperationType.WRITE, `logs/${log.id}`);
   }
 }
 
 export async function deleteAllLogsFromFirestore() {
-  if (isSyncingFromRemote) return;
   try {
-    // We can't delete collection directly without fetching, but we can do it via a batch
     const qSnapshot = await getDocs(collection(db, "logs"));
     const batch = writeBatch(db);
     qSnapshot.forEach((d) => batch.delete(d.ref));
     await batch.commit();
   } catch (err) {
-    console.error("Error clearing logs from Firestore:", err);
+    handleFirestoreError(err, OperationType.DELETE, "logs");
   }
 }
 
 export async function deleteAllOrdersFromFirestore() {
-  if (isSyncingFromRemote) return;
   try {
     const qSnapshot = await getDocs(collection(db, "orders"));
     const batch = writeBatch(db);
     qSnapshot.forEach((d) => batch.delete(d.ref));
     await batch.commit();
   } catch (err) {
-    console.error("Error clearing orders from Firestore:", err);
+    handleFirestoreError(err, OperationType.DELETE, "orders");
   }
 }
 
 export async function syncConfigToFirestore() {
-  if (isSyncingFromRemote) return;
   try {
     const configData: Record<string, string> = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -309,6 +346,6 @@ export async function syncConfigToFirestore() {
       await setDoc(doc(db, "config", "general"), configData);
     }
   } catch (err) {
-    console.error("Error syncing config to Firestore:", err);
+    handleFirestoreError(err, OperationType.WRITE, "config/general");
   }
 }

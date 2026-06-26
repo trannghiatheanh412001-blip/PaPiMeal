@@ -1,0 +1,163 @@
+{
+  "entities": {
+    "Config": {
+      "title": "Config",
+      "description": "General system configuration properties",
+      "type": "object",
+      "properties": {
+        "papimeal_google_sheet_url": { "type": "string" },
+        "papimeal_admin_email": { "type": "string" },
+        "papimeal_cfg_app_name": { "type": "string" },
+        "papimeal_cfg_slogan": { "type": "string" },
+        "papimeal_cfg_home_banner_title": { "type": "string" },
+        "papimeal_cfg_home_banner_subtitle": { "type": "string" },
+        "papimeal_cfg_success_message": { "type": "string" },
+        "papimeal_cfg_step1_title": { "type": "string" },
+        "papimeal_cfg_step1_sub": { "type": "string" },
+        "papimeal_cfg_header_logo": { "type": "string" },
+        "papimeal_cfg_home_round_logo": { "type": "string" },
+        "papimeal_cfg_home_banner_image": { "type": "string" },
+        "papimeal_cfg_vp1_icon": { "type": "string" },
+        "papimeal_cfg_vp1_title": { "type": "string" },
+        "papimeal_cfg_vp1_desc": { "type": "string" },
+        "papimeal_cfg_vp2_icon": { "type": "string" },
+        "papimeal_cfg_vp2_title": { "type": "string" },
+        "papimeal_cfg_vp2_desc": { "type": "string" },
+        "papimeal_cfg_vp3_icon": { "type": "string" },
+        "papimeal_cfg_vp3_title": { "type": "string" },
+        "papimeal_cfg_vp3_desc": { "type": "string" },
+        "papimeal_cfg_shop_address": { "type": "string" },
+        "papimeal_cfg_shop_phone": { "type": "string" },
+        "papimeal_cfg_start_order_btn": { "type": "string" },
+        "papimeal_cfg_home_back_btn": { "type": "string" },
+        "papimeal_cfg_step2_title": { "type": "string" },
+        "papimeal_cfg_step2_sub": { "type": "string" },
+        "papimeal_cfg_confirm_title": { "type": "string" },
+        "papimeal_cfg_confirm_sub": { "type": "string" },
+        "papimeal_cfg_role_customer_title": { "type": "string" },
+        "papimeal_cfg_role_customer_sub": { "type": "string" },
+        "papimeal_cfg_role_tracking_title": { "type": "string" },
+        "papimeal_cfg_role_tracking_sub": { "type": "string" },
+        "papimeal_cfg_role_kitchen_title": { "type": "string" },
+        "papimeal_cfg_role_kitchen_sub": { "type": "string" },
+        "papimeal_cfg_role_admin_title": { "type": "string" },
+        "papimeal_cfg_role_admin_sub": { "type": "string" },
+        "papimeal_cfg_demo_guide_title": { "type": "string" },
+        "papimeal_cfg_demo_guide_text": { "type": "string" }
+      }
+    },
+    "Product": {
+      "title": "Product",
+      "description": "A food item available for ordering",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["Đang bán", "Ngừng bán"] },
+        "categoryId": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "name", "price", "status", "categoryId"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Food category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "User account detail for shop roles",
+      "type": "object",
+      "properties": {
+        "phone": { "type": "string" },
+        "password": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "KITCHEN", "PACKER", "SHIPPER"] },
+        "name": { "type": "string" }
+      },
+      "required": ["phone", "password", "role", "name"]
+    },
+    "StatusLog": {
+      "title": "StatusLog",
+      "description": "Audit trail log of an order status change",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderId": { "type": "string" },
+        "oldStatus": { "type": "string" },
+        "newStatus": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "orderId", "oldStatus", "newStatus", "updatedBy", "timestamp"]
+    },
+    "OrderItem": {
+      "title": "OrderItem",
+      "description": "Specific food portion with assignee consumer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" },
+        "note": { "type": "string" },
+        "consumerName": { "type": "string" }
+      },
+      "required": ["id", "productId", "productName", "price", "quantity", "consumerName"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A lunch box group order representing multiple portions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "receiveDate": { "type": "string" },
+        "receiveTime": { "type": "string" },
+        "deliveryAddress": { "type": "string" },
+        "deliveryFee": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string" },
+        "items": {
+          "type": "array"
+        }
+      },
+      "required": ["id", "customerName", "customerPhone", "receiveDate", "receiveTime", "deliveryAddress", "totalAmount", "status", "items"]
+    }
+  },
+  "firestore": {
+    "config/{configId}": {
+      "schema": "Config",
+      "description": "General settings configuration"
+    },
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Active menus items list"
+    },
+    "categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Menu categories"
+    },
+    "accounts/{phone}": {
+      "schema": "Account",
+      "description": "Internal login accounts"
+    },
+    "logs/{logId}": {
+      "schema": "StatusLog",
+      "description": "Live status update audits"
+    },
+    "orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer live food orders"
+    }
+  }
+}
