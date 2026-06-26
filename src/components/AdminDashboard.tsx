@@ -100,6 +100,12 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   const [editImg, setEditImg] = useState("");
   const [editNote, setEditNote] = useState("");
 
+  // Category management states
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editingCatName, setEditingCatName] = useState("");
+
   // Orders List filtering states
   const [orderFilterDate, setOrderFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [orderFilterStatus, setOrderFilterStatus] = useState<string>("");
@@ -369,7 +375,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   // Submit new product
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newId.trim() || !newName.trim() || !newCat || newPrice <= 0 || newWeight <= 0) {
+    if (!newId.trim() || !newName.trim() || newPrice <= 0 || newWeight <= 0) {
       alert("Vui lòng điền đầy đủ các thông tin bắt buộc!");
       return;
     }
@@ -419,6 +425,79 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
     triggerRefresh();
   };
 
+  // Category Management Handlers
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newCategoryName.trim();
+    if (!name) return;
+
+    if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      alert("Tên danh mục này đã tồn tại rồi!");
+      return;
+    }
+
+    const newCatObj: Category = {
+      id: "cat_" + Date.now(),
+      name
+    };
+
+    const updated = [...categories, newCatObj];
+    setCategories(updated);
+    saveCategories(updated);
+    setNewCategoryName("");
+    alert("🎉 Thêm danh mục mới thành công!");
+    triggerRefresh();
+  };
+
+  const startEditCategory = (cat: Category) => {
+    setEditingCatId(cat.id);
+    setEditingCatName(cat.name);
+  };
+
+  const handleSaveEditCategory = (catId: string) => {
+    const name = editingCatName.trim();
+    if (!name) return;
+
+    if (categories.some(c => c.id !== catId && c.name.toLowerCase() === name.toLowerCase())) {
+      alert("Tên danh mục này đã tồn tại!");
+      return;
+    }
+
+    const updated = categories.map(c => c.id === catId ? { ...c, name } : c);
+    setCategories(updated);
+    saveCategories(updated);
+    setEditingCatId(null);
+    setEditingCatName("");
+    alert("🎉 Cập nhật danh mục thành công!");
+    triggerRefresh();
+  };
+
+  const handleDeleteCategory = (catId: string) => {
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+
+    const confirmMsg = `Bạn có chắc chắn muốn xóa danh mục "${cat.name}"?\n\nTất cả các món ăn thuộc danh mục này sẽ được tự động chuyển về trạng thái "Chưa phân loại" để bạn có thể chỉnh sửa lại sau.`;
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
+    const updatedCats = categories.filter(c => c.id !== catId);
+    setCategories(updatedCats);
+    saveCategories(updatedCats);
+
+    const updatedProds = products.map(p => {
+      if (p.category === catId) {
+        return { ...p, category: "" };
+      }
+      return p;
+    });
+
+    setProducts(updatedProds);
+    saveProducts(updatedProds);
+    alert(`🎉 Đã xóa danh mục "${cat.name}". Các món ăn liên quan đã được chuyển về trạng thái Chưa phân loại!`);
+    triggerRefresh();
+  };
+
   // Open Edit modal
   const startEditProduct = (prod: Product) => {
     setEditingProduct(prod);
@@ -438,7 +517,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   // Save edit changes
   const handleSaveEdit = () => {
     if (!editingProduct) return;
-    if (!editName.trim() || !editCat || editPrice <= 0 || editWeight <= 0) {
+    if (!editName.trim() || editPrice <= 0 || editWeight <= 0) {
       alert("Vui lòng điền đầy đủ các thông tin bắt buộc!");
       return;
     }
@@ -723,11 +802,20 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
       {/* ======================= TAB 1: PRODUCT LIST ======================= */}
       {activeTab === 'products' && (
         <div className="space-y-3">
-          <div className="flex justify-between items-center pb-1">
-            <h4 className="text-xs font-bold text-[#00523b] uppercase tracking-wider">
-              Thực đơn vận hành ({products.length} món)
-            </h4>
-            <span className="text-[10px] text-[#394013]/50 font-bold">* Gạt công tắc để ẩn/hiện sản phẩm</span>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-1 border-b border-[#00523b]/10">
+            <div>
+              <h4 className="text-xs font-bold text-[#00523b] uppercase tracking-wider">
+                Thực đơn vận hành ({products.length} món)
+              </h4>
+              <span className="text-[10px] text-[#394013]/50 font-bold">* Gạt công tắc để ẩn/hiện sản phẩm</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCategoryModalOpen(true)}
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer w-full sm:w-auto shadow-sm transition"
+            >
+              📂 QUẢN LÝ DANH MỤC
+            </button>
           </div>
 
           <div className="space-y-2.5">
@@ -745,9 +833,20 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                     )}
                     <div>
                       <h5 className="font-bold text-xs text-[#394013]">{p.name}</h5>
-                      <span className="text-[9px] bg-[#00523b]/10 text-[#00523b] px-1.5 py-0.5 rounded font-extrabold block w-fit mt-0.5">
-                        {p.weight} {p.unit}
-                      </span>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        <span className="text-[9px] bg-[#00523b]/10 text-[#00523b] px-1.5 py-0.5 rounded font-extrabold">
+                          {p.weight} {p.unit}
+                        </span>
+                        {p.category && categories.some(c => c.id === p.category) ? (
+                          <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-extrabold">
+                            📂 {categories.find(c => c.id === p.category)?.name}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-extrabold">
+                            ⚠️ Chưa phân loại
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -825,14 +924,13 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] font-bold text-[#394013] mb-0.5">Danh mục món *</label>
+              <label className="block text-[10px] font-bold text-[#394013] mb-0.5">Danh mục món</label>
               <select
                 value={newCat}
                 onChange={e => setNewCat(e.target.value)}
                 className="w-full px-3 py-2.5 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium cursor-pointer"
-                required
               >
-                <option value="">-- Chọn --</option>
+                <option value="">-- Chưa phân loại --</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
@@ -2155,12 +2253,13 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 mb-0.5">Danh mục *</label>
+                    <label className="block text-[10px] font-bold text-gray-400 mb-0.5">Danh mục</label>
                     <select
                       value={editCat}
                       onChange={e => setEditCat(e.target.value)}
-                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium cursor-pointer"
                     >
+                      <option value="">-- Chưa phân loại --</option>
                       {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
@@ -2306,6 +2405,152 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                   className="flex-1 py-2 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] rounded-lg text-xs font-bold shadow transition cursor-pointer"
                 >
                   Lưu thay đổi 💾
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================= CATEGORY MANAGEMENT MODAL ======================= */}
+      <AnimatePresence>
+        {isCategoryModalOpen && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5">📂 Quản lý danh mục ({categories.length})</h4>
+                <button 
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setEditingCatId(null);
+                  }} 
+                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg cursor-pointer transition"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Form thêm mới danh mục */}
+              <form onSubmit={handleAddCategory} className="bg-[#00523b]/5 p-3 rounded-xl border border-[#00523b]/10 space-y-2">
+                <label className="block text-[10px] font-black text-[#00523b] uppercase tracking-wider">
+                  ➕ Thêm danh mục món mới:
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Lẩu & Súp 🍲"
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-2 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-bold rounded-lg text-xs transition cursor-pointer"
+                  >
+                    Thêm
+                  </button>
+                </div>
+              </form>
+
+              {/* Danh sách danh mục */}
+              <div className="space-y-2.5">
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                  Danh mục hiện tại:
+                </span>
+                
+                {categories.length === 0 ? (
+                  <div className="text-center py-4 text-xs text-gray-400 font-bold">
+                    Chưa có danh mục nào. Hãy thêm danh mục mới!
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {categories.map(cat => {
+                      const count = products.filter(p => p.category === cat.id).length;
+                      const isEditingThis = editingCatId === cat.id;
+
+                      return (
+                        <div 
+                          key={cat.id} 
+                          className="flex items-center justify-between p-2.5 bg-[#fcfef1] rounded-xl border border-[#00523b]/10 shadow-sm gap-2"
+                        >
+                          {isEditingThis ? (
+                            <div className="flex-1 flex gap-1.5 items-center">
+                              <input
+                                type="text"
+                                value={editingCatName}
+                                onChange={e => setEditingCatName(e.target.value)}
+                                className="flex-1 px-2 py-1.5 border border-[#00523b]/30 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-semibold"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEditCategory(cat.id)}
+                                className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition cursor-pointer"
+                                title="Lưu"
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCatId(null);
+                                  setEditingCatName("");
+                                }}
+                                className="p-1.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition cursor-pointer"
+                                title="Hủy"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-bold text-gray-800 truncate block">{cat.name}</span>
+                                <span className="text-[9px] text-gray-400 font-bold">({count} món ăn)</span>
+                              </div>
+                              <div className="flex gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => startEditCategory(cat)}
+                                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                                  title="Đổi tên danh mục"
+                                >
+                                  <Edit2 size={13} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCategory(cat.id)}
+                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                                  title="Xóa danh mục"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setEditingCatId(null);
+                  }}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl text-xs transition cursor-pointer"
+                >
+                  Đóng lại
                 </button>
               </div>
             </motion.div>
