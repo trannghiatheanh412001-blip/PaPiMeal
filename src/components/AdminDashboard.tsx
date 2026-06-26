@@ -213,6 +213,16 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         step2Sub: localStorage.getItem("papimeal_cfg_step2_sub") || "",
         confirmTitle: localStorage.getItem("papimeal_cfg_confirm_title") || "",
         confirmSub: localStorage.getItem("papimeal_cfg_confirm_sub") || "",
+        roleCustomerTitle: localStorage.getItem("papimeal_cfg_role_customer_title") || "",
+        roleCustomerSub: localStorage.getItem("papimeal_cfg_role_customer_sub") || "",
+        roleTrackingTitle: localStorage.getItem("papimeal_cfg_role_tracking_title") || "",
+        roleTrackingSub: localStorage.getItem("papimeal_cfg_role_tracking_sub") || "",
+        roleKitchenTitle: localStorage.getItem("papimeal_cfg_role_kitchen_title") || "",
+        roleKitchenSub: localStorage.getItem("papimeal_cfg_role_kitchen_sub") || "",
+        roleAdminTitle: localStorage.getItem("papimeal_cfg_role_admin_title") || "",
+        roleAdminSub: localStorage.getItem("papimeal_cfg_role_admin_sub") || "",
+        demoGuideTitle: localStorage.getItem("papimeal_cfg_demo_guide_title") || "",
+        demoGuideText: localStorage.getItem("papimeal_cfg_demo_guide_text") || "",
         googleSheetsUrl: localStorage.getItem("papimeal_google_sheets_url") || "",
         accounts: localStorage.getItem("papimeal_accounts") || "",
         adminNotificationEmail: localStorage.getItem("papimeal_admin_email") || ""
@@ -286,6 +296,16 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
           step2Sub: "papimeal_cfg_step2_sub",
           confirmTitle: "papimeal_cfg_confirm_title",
           confirmSub: "papimeal_cfg_confirm_sub",
+          roleCustomerTitle: "papimeal_cfg_role_customer_title",
+          roleCustomerSub: "papimeal_cfg_role_customer_sub",
+          roleTrackingTitle: "papimeal_cfg_role_tracking_title",
+          roleTrackingSub: "papimeal_cfg_role_tracking_sub",
+          roleKitchenTitle: "papimeal_cfg_role_kitchen_title",
+          roleKitchenSub: "papimeal_cfg_role_kitchen_sub",
+          roleAdminTitle: "papimeal_cfg_role_admin_title",
+          roleAdminSub: "papimeal_cfg_role_admin_sub",
+          demoGuideTitle: "papimeal_cfg_demo_guide_title",
+          demoGuideText: "papimeal_cfg_demo_guide_text",
           googleSheetsUrl: "papimeal_google_sheets_url"
         };
 
@@ -1927,6 +1947,132 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                     onChange={e => setTextConfig(prev => ({ ...prev, successMessage: e.target.value }))}
                     className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
                   />
+                </div>
+              </div>
+
+              {/* PHẦN 5: VAI TRÒ & HƯỚNG DẪN DEMO */}
+              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-4">
+                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                  🍀 Tùy chỉnh Các Vai Trò & Hướng dẫn Demo ở Trang Chủ
+                </h5>
+                
+                <div className="p-2.5 bg-emerald-50/50 rounded-lg space-y-3">
+                  <span className="text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold text-emerald-800">1. Vai trò "Khách Hàng"</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleCustomerTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleCustomerTitle: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleCustomerSub || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleCustomerSub: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-amber-50/50 rounded-lg space-y-3">
+                  <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded font-bold text-amber-800">2. Vai trò "Tra Cứu Đơn"</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleTrackingTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleTrackingTitle: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleTrackingSub || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleTrackingSub: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-teal-50/50 rounded-lg space-y-3">
+                  <span className="text-[10px] bg-teal-100 px-1.5 py-0.5 rounded font-bold text-teal-800">3. Vai trò "Màn Hình Bếp"</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleKitchenTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleKitchenTitle: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleKitchenSub || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleKitchenSub: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-blue-50/50 rounded-lg space-y-3">
+                  <span className="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded font-bold text-blue-800">4. Vai trò "Ban Quản Trị"</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleAdminTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleAdminTitle: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                      <input 
+                        type="text"
+                        value={textConfig.roleAdminSub || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, roleAdminSub: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 pt-3 space-y-2">
+                  <span className="text-[10px] bg-purple-100 px-1.5 py-0.5 rounded font-bold text-purple-800 block w-fit">💡 Hướng Dẫn Trải Nghiệm Demo (Hộp màu vàng chân trang)</span>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề khung hướng dẫn:</label>
+                    <input 
+                      type="text" 
+                      value={textConfig.demoGuideTitle || ""}
+                      onChange={e => setTextConfig(prev => ({ ...prev, demoGuideTitle: e.target.value }))}
+                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold animate-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Nội dung hướng dẫn chi tiết (Hỗ trợ xuống dòng, để trống sẽ ẩn hoàn toàn khung này):</label>
+                    <textarea 
+                      rows={5}
+                      value={textConfig.demoGuideText || ""}
+                      onChange={e => setTextConfig(prev => ({ ...prev, demoGuideText: e.target.value }))}
+                      placeholder="Nếu bạn muốn ẩn khung hướng dẫn màu vàng ở trang chủ khi gửi cho khách, chỉ cần xóa sạch toàn bộ nội dung trong ô này!"
+                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                    />
+                  </div>
                 </div>
               </div>
 

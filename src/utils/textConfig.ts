@@ -25,7 +25,17 @@ const CONFIG_KEYS = {
   STEP2_TITLE: "papimeal_cfg_step2_title",
   STEP2_SUB: "papimeal_cfg_step2_sub",
   CONFIRM_TITLE: "papimeal_cfg_confirm_title",
-  CONFIRM_SUB: "papimeal_cfg_confirm_sub"
+  CONFIRM_SUB: "papimeal_cfg_confirm_sub",
+  ROLE_CUSTOMER_TITLE: "papimeal_cfg_role_customer_title",
+  ROLE_CUSTOMER_SUB: "papimeal_cfg_role_customer_sub",
+  ROLE_TRACKING_TITLE: "papimeal_cfg_role_tracking_title",
+  ROLE_TRACKING_SUB: "papimeal_cfg_role_tracking_sub",
+  ROLE_KITCHEN_TITLE: "papimeal_cfg_role_kitchen_title",
+  ROLE_KITCHEN_SUB: "papimeal_cfg_role_kitchen_sub",
+  ROLE_ADMIN_TITLE: "papimeal_cfg_role_admin_title",
+  ROLE_ADMIN_SUB: "papimeal_cfg_role_admin_sub",
+  DEMO_GUIDE_TITLE: "papimeal_cfg_demo_guide_title",
+  DEMO_GUIDE_TEXT: "papimeal_cfg_demo_guide_text"
 };
 
 export interface AppTextConfig {
@@ -56,6 +66,16 @@ export interface AppTextConfig {
   step2Sub: string;
   confirmTitle: string;
   confirmSub: string;
+  roleCustomerTitle: string;
+  roleCustomerSub: string;
+  roleTrackingTitle: string;
+  roleTrackingSub: string;
+  roleKitchenTitle: string;
+  roleKitchenSub: string;
+  roleAdminTitle: string;
+  roleAdminSub: string;
+  demoGuideTitle: string;
+  demoGuideText: string;
 }
 
 export function loadTextConfig(): AppTextConfig {
@@ -86,7 +106,17 @@ export function loadTextConfig(): AppTextConfig {
     step2Title: localStorage.getItem(CONFIG_KEYS.STEP2_TITLE) || "Chọn Món Theo Phần",
     step2Sub: localStorage.getItem(CONFIG_KEYS.STEP2_SUB) || "Lựa chọn các món ăn ngon miệng riêng biệt cho từng người.",
     confirmTitle: localStorage.getItem(CONFIG_KEYS.CONFIRM_TITLE) || "Xác Nhận & Gửi Đơn Hàng",
-    confirmSub: localStorage.getItem(CONFIG_KEYS.CONFIRM_SUB) || "Kiểm tra kỹ thông tin từng phần ăn & địa điểm trước khi gửi đến bếp nhé."
+    confirmSub: localStorage.getItem(CONFIG_KEYS.CONFIRM_SUB) || "Kiểm tra kỹ thông tin từng phần ăn & địa điểm trước khi gửi đến bếp nhé.",
+    roleCustomerTitle: localStorage.getItem(CONFIG_KEYS.ROLE_CUSTOMER_TITLE) || "Khách Hàng",
+    roleCustomerSub: localStorage.getItem(CONFIG_KEYS.ROLE_CUSTOMER_SUB) || "Đặt món theo khẩu phần",
+    roleTrackingTitle: localStorage.getItem(CONFIG_KEYS.ROLE_TRACKING_TITLE) || "Tra Cứu Đơn",
+    roleTrackingSub: localStorage.getItem(CONFIG_KEYS.ROLE_TRACKING_SUB) || "Theo dõi thời gian thực",
+    roleKitchenTitle: localStorage.getItem(CONFIG_KEYS.ROLE_KITCHEN_TITLE) || "Màn Hình Bếp",
+    roleKitchenSub: localStorage.getItem(CONFIG_KEYS.ROLE_KITCHEN_SUB) || "Nấu theo tiến trình live",
+    roleAdminTitle: localStorage.getItem(CONFIG_KEYS.ROLE_ADMIN_TITLE) || "Ban Quản Trị",
+    roleAdminSub: localStorage.getItem(CONFIG_KEYS.ROLE_ADMIN_SUB) || "Menu, giá cả & duyệt đơn",
+    demoGuideTitle: localStorage.getItem(CONFIG_KEYS.DEMO_GUIDE_TITLE) || "Mách nhỏ cách trải nghiệm Demo:",
+    demoGuideText: localStorage.getItem(CONFIG_KEYS.DEMO_GUIDE_TEXT) || "1. Vào vai Khách Hàng để tạo 1 đơn hàng (có thể chọn đặt nhiều suất ăn khác nhau).\n2. Vào vai Ban Quản Trị để phê duyệt đơn hàng & tự động tổng hợp nguyên liệu đi chợ.\n3. Vào vai Màn Hình Bếp để chế biến và báo hoàn tất.\n4. Quay lại Tra Cứu Đơn để cập nhật tiến độ nấu nướng trực quan thời gian thực!"
   };
 }
 
@@ -118,4 +148,14 @@ export function saveTextConfig(config: AppTextConfig) {
   localStorage.setItem(CONFIG_KEYS.STEP2_SUB, config.step2Sub.trim());
   localStorage.setItem(CONFIG_KEYS.CONFIRM_TITLE, config.confirmTitle.trim());
   localStorage.setItem(CONFIG_KEYS.CONFIRM_SUB, config.confirmSub.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_CUSTOMER_TITLE, config.roleCustomerTitle.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_CUSTOMER_SUB, config.roleCustomerSub.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_TRACKING_TITLE, config.roleTrackingTitle.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_TRACKING_SUB, config.roleTrackingSub.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_KITCHEN_TITLE, config.roleKitchenTitle.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_KITCHEN_SUB, config.roleKitchenSub.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_ADMIN_TITLE, config.roleAdminTitle.trim());
+  localStorage.setItem(CONFIG_KEYS.ROLE_ADMIN_SUB, config.roleAdminSub.trim());
+  localStorage.setItem(CONFIG_KEYS.DEMO_GUIDE_TITLE, config.demoGuideTitle.trim());
+  localStorage.setItem(CONFIG_KEYS.DEMO_GUIDE_TEXT, config.demoGuideText.trim());
 }

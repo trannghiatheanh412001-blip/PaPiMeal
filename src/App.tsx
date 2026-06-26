@@ -157,12 +157,12 @@ export default function App() {
                       <span className="text-2xl">🍛</span>
                     </div>
                     <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">Khách Hàng</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">Đặt món theo khẩu phần</p>
+                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleCustomerTitle || "Khách Hàng"}</h3>
+                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleCustomerSub || "Đặt món theo khẩu phần"}</p>
                     </div>
                     <div className="w-1.5 h-1/2 bg-[#00523b] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
                   </motion.div>
-
+ 
                   {/* Tracking Card */}
                   <motion.div
                     whileHover={{ y: -4 }}
@@ -174,12 +174,12 @@ export default function App() {
                       <span className="text-2xl">🔍</span>
                     </div>
                     <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">Tra Cứu Đơn</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">Theo dõi thời gian thực</p>
+                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleTrackingTitle || "Tra Cứu Đơn"}</h3>
+                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleTrackingSub || "Theo dõi thời gian thực"}</p>
                     </div>
                     <div className="w-1.5 h-1/2 bg-[#394013] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
                   </motion.div>
-
+ 
                   {/* Kitchen Card */}
                   <motion.div
                     whileHover={{ y: -4 }}
@@ -191,12 +191,12 @@ export default function App() {
                       <span className="text-2xl">👨‍🍳</span>
                     </div>
                     <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">Màn Hình Bếp</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">Nấu theo tiến trình live</p>
+                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleKitchenTitle || "Màn Hình Bếp"}</h3>
+                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleKitchenSub || "Nấu theo tiến trình live"}</p>
                     </div>
                     <div className="w-1.5 h-1/2 bg-[#00523b] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
                   </motion.div>
-
+ 
                   {/* Admin Card */}
                   <motion.div
                     whileHover={{ y: -4 }}
@@ -208,26 +208,25 @@ export default function App() {
                       <span className="text-2xl">⚙️</span>
                     </div>
                     <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">Ban Quản Trị</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">Menu, giá cả &amp; duyệt đơn</p>
+                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleAdminTitle || "Ban Quản Trị"}</h3>
+                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleAdminSub || "Menu, giá cả &amp; duyệt đơn"}</p>
                     </div>
                     <div className="w-1.5 h-1/2 bg-[#394013] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
                   </motion.div>
                 </div>
-
+ 
                 {/* Bottom Guide */}
-                <div className="premium-card p-5 bg-white border-l-[6px] border-[#00523b] shadow-sm flex gap-3 text-xs">
-                  <span className="text-2xl shrink-0">💡</span>
-                  <div className="space-y-1.5">
-                    <p className="font-extrabold text-sm text-[#00523b] tracking-tight">Mách nhỏ cách trải nghiệm Demo:</p>
-                    <div className="text-[#394013]/85 font-medium leading-relaxed space-y-1">
-                      <p>1. Vào vai <strong className="text-[#00523b]">Khách Hàng</strong> để tạo 1 đơn hàng (có thể chọn đặt nhiều suất ăn khác nhau).</p>
-                      <p>2. Vào vai <strong className="text-[#00523b]">Ban Quản Trị</strong> (Mật khẩu: <code className="bg-[#00523b]/5 px-1 rounded font-bold">KHOINGHIEP</code>) để phê duyệt đơn hàng &amp; tự động tổng hợp nguyên liệu đi chợ.</p>
-                      <p>3. Vào vai <strong className="text-[#00523b]">Màn Hình Bếp</strong> (Mật khẩu: <code className="bg-[#00523b]/5 px-1 rounded font-bold">THANHCONG</code>) để chế biến và báo hoàn tất.</p>
-                      <p>4. Quay lại <strong className="text-[#00523b]">Tra Cứu Đơn</strong> để cập nhật tiến độ nấu nướng trực quan thời gian thực!</p>
+                {textConfig.demoGuideText && textConfig.demoGuideText.trim() !== "" && (
+                  <div className="premium-card p-5 bg-white border-l-[6px] border-[#00523b] shadow-sm flex gap-3 text-xs">
+                    <span className="text-2xl shrink-0">💡</span>
+                    <div className="space-y-1.5 w-full">
+                      <p className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.demoGuideTitle || "Mách nhỏ cách trải nghiệm Demo:"}</p>
+                      <div className="text-[#394013]/85 font-medium leading-relaxed space-y-1 whitespace-pre-line">
+                        {textConfig.demoGuideText}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </motion.div>
             )}
 
