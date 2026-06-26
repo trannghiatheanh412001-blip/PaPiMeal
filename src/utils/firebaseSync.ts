@@ -63,6 +63,30 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(jsonErrorString);
 }
 
+function toFirestoreOrder(order: Order): any {
+  return {
+    ...order,
+    portions: JSON.stringify(order.portions)
+  };
+}
+
+function fromFirestoreOrder(docData: any): Order {
+  let portions: any[] = [];
+  if (typeof docData.portions === "string") {
+    try {
+      portions = JSON.parse(docData.portions);
+    } catch (e) {
+      console.error("Error parsing portions JSON:", e);
+    }
+  } else if (Array.isArray(docData.portions)) {
+    portions = docData.portions;
+  }
+  return {
+    ...docData,
+    portions
+  } as Order;
+}
+
 export function initFirebaseSync(onUpdate: () => void) {
   console.log("🔄 Starting real-time Firebase synchronization...");
 
@@ -227,7 +251,7 @@ export function initFirebaseSync(onUpdate: () => void) {
   // 6. SYNC ORDERS (CRITICAL!)
   onSnapshot(collection(db, "orders"), (snapshot) => {
     const orders: Order[] = [];
-    snapshot.forEach((d) => orders.push(d.data() as Order));
+    snapshot.forEach((d) => orders.push(fromFirestoreOrder(d.data())));
     orders.sort((a, b) => b.id.localeCompare(a.id));
     localStorage.setItem("papimeal_orders", JSON.stringify(orders));
     console.log(`📥 Sync completed: loaded ${orders.length} orders from Firestore.`);
@@ -239,7 +263,7 @@ export function initFirebaseSync(onUpdate: () => void) {
 
 export async function syncOrderToFirestore(order: Order) {
   try {
-    await setDoc(doc(db, "orders", order.id), order);
+    await setDoc(doc(db, "orders", order.id), toFirestoreOrder(order));
     console.log(`📤 Order ${order.id} saved to Firestore.`);
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `orders/${order.id}`);
