@@ -41,6 +41,21 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
   // Track checked state of individual items in portions for packaging safety
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
 
+  // Memoized product lookup map for finding product weight and unit
+  const productsMap = React.useMemo(() => {
+    try {
+      const list = loadProducts();
+      const map: { [id: string]: Product } = {};
+      list.forEach(p => {
+        map[p.id] = p;
+      });
+      return map;
+    } catch (e) {
+      console.error("Error loading products for map:", e);
+      return {};
+    }
+  }, [orders]);
+
   const toggleChecked = (orderId: string, portionIdx: number, itemKey: string) => {
     const key = `${orderId}-${portionIdx}-${itemKey}`;
     setCheckedItems(prev => ({ ...prev, [key]: !prev[key] }));
@@ -695,32 +710,49 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
                               {portionItems.map((item, itemIdx) => {
                                 const itemKey = `${item.id}-${itemIdx}`;
                                 const isChecked = !!checkedItems[`${order.id}-${pIdx}-${itemKey}`];
+                                const product = productsMap[item.id];
+                                const weightVal = product ? product.weight : 0;
+                                const unitStr = product ? (product.unit === "phần" ? "g" : product.unit) : "g";
+                                const totalWeight = item.qty * weightVal;
+
                                 return (
                                   <li 
                                     key={itemKey} 
                                     onClick={() => toggleChecked(order.id, pIdx, itemKey)}
-                                    className={`font-black flex justify-between items-center cursor-pointer p-2.5 rounded-xl border transition select-none active:scale-95 ${
+                                    className={`font-black flex justify-between items-center cursor-pointer p-2.5 rounded-xl border transition select-none active:scale-95 gap-3 ${
                                       isChecked 
                                         ? 'line-through text-gray-400 opacity-60 bg-gray-100 border-gray-200' 
-                                        : 'text-[#394013] bg-white border-gray-200 hover:bg-gray-100'
+                                        : 'text-[#394013] bg-white border-gray-200 hover:bg-gray-100/80 hover:border-gray-300 shadow-sm'
                                     } ${isBigFont ? 'text-base' : 'text-xs'}`}
                                   >
-                                    <span className="flex items-center gap-2.5">
+                                    <span className="flex items-center gap-2.5 min-w-0">
                                       <input 
                                         type="checkbox" 
                                         checked={isChecked}
                                         onChange={() => {}} // handled by click of parent li
                                         className="w-5 h-5 rounded cursor-pointer accent-[#00523b] shrink-0 pointer-events-none" 
                                       />
-                                      <span>{item.name}</span>
+                                      <span className="truncate">{item.name}</span>
                                     </span>
-                                    <span className={`font-black px-2.5 py-1 rounded-lg shrink-0 border ${
-                                      isChecked 
-                                        ? 'bg-gray-200 text-gray-500 border-gray-300' 
-                                        : 'bg-emerald-50 text-[#00523b] border-emerald-200'
-                                    }`}>
-                                      SỐ LƯỢNG: {item.qty}
-                                    </span>
+                                    
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={`font-extrabold px-2 py-1 rounded-lg border text-[11px] uppercase tracking-wider ${
+                                        isChecked 
+                                          ? 'bg-gray-200 text-gray-400 border-gray-300' 
+                                          : 'bg-emerald-50 text-[#00523b] border-emerald-200'
+                                      }`}>
+                                        {item.qty} SUẤT
+                                      </span>
+                                      {totalWeight > 0 && (
+                                        <span className={`font-black px-2.5 py-1 rounded-lg border text-[11px] shadow-sm tracking-wide ${
+                                          isChecked
+                                            ? 'bg-gray-100 text-gray-400 border-gray-200'
+                                            : 'bg-amber-400 text-amber-950 border-amber-500'
+                                        }`}>
+                                          TỔNG: {totalWeight}{unitStr}
+                                        </span>
+                                      )}
+                                    </div>
                                   </li>
                                 );
                               })}

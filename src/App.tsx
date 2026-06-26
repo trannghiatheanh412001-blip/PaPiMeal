@@ -28,6 +28,19 @@ export default function App() {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [latestOrderId, setLatestOrderId] = useState("");
   const [textConfig, setTextConfig] = useState(() => loadTextConfig());
+  const [portal, setPortal] = useState<'customer' | 'staff'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const modeParam = params.get("mode") || params.get("portal") || params.get("view");
+    if (modeParam === "staff" || modeParam === "kitchen" || modeParam === "admin" || modeParam === "nhanvien") {
+      return "staff";
+    }
+    const saved = localStorage.getItem("papimeal_portal");
+    return (saved === "staff") ? "staff" : "customer";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("papimeal_portal", portal);
+  }, [portal]);
 
   // Subscribe to real-time Firebase syncing on mount
   useEffect(() => {
@@ -160,75 +173,107 @@ export default function App() {
                   </p>
                 </div>
 
+                {/* Segmented Switcher for Portals (Customer vs Staff) */}
+                <div className="flex bg-[#00523b]/5 p-1 rounded-2xl border border-[#00523b]/10 max-w-xs mx-auto relative z-20">
+                  <button
+                    onClick={() => setPortal('customer')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 relative cursor-pointer ${
+                      portal === 'customer'
+                        ? "bg-[#00523b] text-[#fffbd8] shadow-sm"
+                        : "text-[#394013]/75 hover:bg-[#00523b]/10"
+                    }`}
+                  >
+                    <span>🍛</span>
+                    <span>KHÁCH HÀNG</span>
+                  </button>
+                  <button
+                    onClick={() => setPortal('staff')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 relative cursor-pointer ${
+                      portal === 'staff'
+                        ? "bg-[#00523b] text-[#fffbd8] shadow-sm"
+                        : "text-[#394013]/75 hover:bg-[#00523b]/10"
+                    }`}
+                  >
+                    <span>💼</span>
+                    <span>NHÂN VIÊN</span>
+                  </button>
+                </div>
+
                 {/* Grid Roles Selector */}
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Customer Card */}
-                  <motion.div
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setView('customer')}
-                    className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
-                  >
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
-                      <span className="text-2xl">🍛</span>
-                    </div>
-                    <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleCustomerTitle || "Khách Hàng"}</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleCustomerSub || "Đặt món theo khẩu phần"}</p>
-                    </div>
-                    <div className="w-1.5 h-1/2 bg-[#00523b] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
-                  </motion.div>
- 
-                  {/* Tracking Card */}
-                  <motion.div
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setView('tracking')}
-                    className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
-                  >
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
-                      <span className="text-2xl">🔍</span>
-                    </div>
-                    <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleTrackingTitle || "Tra Cứu Đơn"}</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleTrackingSub || "Theo dõi thời gian thực"}</p>
-                    </div>
-                    <div className="w-1.5 h-1/2 bg-[#394013] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
-                  </motion.div>
- 
-                  {/* Kitchen Card */}
-                  <motion.div
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setView('kitchen')}
-                    className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
-                  >
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
-                      <span className="text-2xl">👨‍🍳</span>
-                    </div>
-                    <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleKitchenTitle || "Màn Hình Bếp"}</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleKitchenSub || "Nấu theo tiến trình live"}</p>
-                    </div>
-                    <div className="w-1.5 h-1/2 bg-[#00523b] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
-                  </motion.div>
- 
-                  {/* Admin Card */}
-                  <motion.div
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setView('admin')}
-                    className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
-                  >
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
-                      <span className="text-2xl">⚙️</span>
-                    </div>
-                    <div className="mt-8">
-                      <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleAdminTitle || "Ban Quản Trị"}</h3>
-                      <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleAdminSub || "Menu, giá cả &amp; duyệt đơn"}</p>
-                    </div>
-                    <div className="w-1.5 h-1/2 bg-[#394013] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
-                  </motion.div>
+                  {portal === 'customer' ? (
+                    <>
+                      {/* Customer Card */}
+                      <motion.div
+                        whileHover={{ y: -4 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setView('customer')}
+                        className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
+                      >
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
+                          <span className="text-2xl">🍛</span>
+                        </div>
+                        <div className="mt-8">
+                          <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleCustomerTitle || "Khách Hàng"}</h3>
+                          <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleCustomerSub || "Đặt món theo khẩu phần"}</p>
+                        </div>
+                        <div className="w-1.5 h-1/2 bg-[#00523b] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
+                      </motion.div>
+     
+                      {/* Tracking Card */}
+                      <motion.div
+                        whileHover={{ y: -4 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setView('tracking')}
+                        className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
+                      >
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
+                          <span className="text-2xl">🔍</span>
+                        </div>
+                        <div className="mt-8">
+                          <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleTrackingTitle || "Tra Cứu Đơn"}</h3>
+                          <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleTrackingSub || "Theo dõi thời gian thực"}</p>
+                        </div>
+                        <div className="w-1.5 h-1/2 bg-[#394013] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
+                      </motion.div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Kitchen Card */}
+                      <motion.div
+                        whileHover={{ y: -4 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setView('kitchen')}
+                        className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
+                      >
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
+                          <span className="text-2xl">👨‍🍳</span>
+                        </div>
+                        <div className="mt-8">
+                          <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleKitchenTitle || "Màn Hình Bếp"}</h3>
+                          <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleKitchenSub || "Nấu theo tiến trình live"}</p>
+                        </div>
+                        <div className="w-1.5 h-1/2 bg-[#00523b] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
+                      </motion.div>
+     
+                      {/* Admin Card */}
+                      <motion.div
+                        whileHover={{ y: -4 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setView('admin')}
+                        className="premium-card p-5 flex flex-col justify-between h-40 cursor-pointer text-left transition-all duration-300 relative overflow-hidden group"
+                      >
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#00523b]/5 rounded-bl-[40px] flex items-center justify-center transition-all group-hover:bg-[#00523b]/10">
+                          <span className="text-2xl">⚙️</span>
+                        </div>
+                        <div className="mt-8">
+                          <h3 className="font-extrabold text-sm text-[#00523b] tracking-tight">{textConfig.roleAdminTitle || "Ban Quản Trị"}</h3>
+                          <p className="text-[10px] text-[#394013]/60 font-semibold mt-1">{textConfig.roleAdminSub || "Menu, giá cả &amp; duyệt đơn"}</p>
+                        </div>
+                        <div className="w-1.5 h-1/2 bg-[#394013] absolute left-0 top-1/4 rounded-r-md transition-all group-hover:h-2/3" />
+                      </motion.div>
+                    </>
+                  )}
                 </div>
  
                 {/* Bottom Guide */}
