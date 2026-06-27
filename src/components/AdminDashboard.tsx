@@ -2352,6 +2352,137 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                     />
                   </div>
                 </div>
+
+                {/* Customizable Operational Guide Fields */}
+                <div className="border-t border-gray-100 pt-3 space-y-3">
+                  <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded font-bold text-amber-800 block w-fit">📖 Tùy Chỉnh Cẩm Nang Vận Hành Chi Tiết (Nút & Nội Dung Modal)</span>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#394013] mb-1">Nút mở góc trên (Header):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.guideBtnText || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideBtnText: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#394013] mb-1">Nút lớn màu vàng (Trang chủ):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.guideBannerBtnText || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideBannerBtnText: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#394013] mb-1">Tiêu đề Modal:</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.guideModalTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideModalTitle: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Customer Tab Customization */}
+                  <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
+                    <span className="text-[10px] font-extrabold text-[#00523b]">🍛 Tab KHÁCH HÀNG:</span>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề Concept:</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.guideCustTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideCustTitle: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả ngắn Concept:</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.guideCustDesc || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideCustDesc: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Các bước hướng dẫn chi tiết:</label>
+                      <textarea 
+                        rows={4}
+                        value={textConfig.guideCustSteps || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideCustSteps: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Admin Tab Customization */}
+                  <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
+                    <span className="text-[10px] font-extrabold text-amber-700">⚙️ Tab ADMIN:</span>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề chính:</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.guideAdminTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideAdminTitle: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả lưu ý:</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.guideAdminDesc || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideAdminDesc: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Nhiệm vụ trọng tâm của Admin:</label>
+                      <textarea 
+                        rows={4}
+                        value={textConfig.guideAdminSteps || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideAdminSteps: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Kitchen Tab Customization */}
+                  <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
+                    <span className="text-[10px] font-extrabold text-teal-700">👨‍🍳 Tab TỔ BẾP:</span>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề chính:</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.guideKitchenTitle || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenTitle: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả lưu ý:</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.guideKitchenDesc || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenDesc: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Nội dung hướng dẫn chi tiết:</label>
+                      <textarea 
+                        rows={4}
+                        value={textConfig.guideKitchenSteps || ""}
+                        onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenSteps: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <button

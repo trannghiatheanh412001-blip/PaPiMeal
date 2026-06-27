@@ -37,7 +37,19 @@ const CONFIG_KEYS = {
   ROLE_ADMIN_TITLE: "papimeal_cfg_role_admin_title",
   ROLE_ADMIN_SUB: "papimeal_cfg_role_admin_sub",
   DEMO_GUIDE_TITLE: "papimeal_cfg_demo_guide_title",
-  DEMO_GUIDE_TEXT: "papimeal_cfg_demo_guide_text"
+  DEMO_GUIDE_TEXT: "papimeal_cfg_demo_guide_text",
+  GUIDE_BTN_TEXT: "papimeal_cfg_guide_btn_text",
+  GUIDE_BANNER_BTN_TEXT: "papimeal_cfg_guide_banner_btn_text",
+  GUIDE_MODAL_TITLE: "papimeal_cfg_guide_modal_title",
+  GUIDE_CUST_TITLE: "papimeal_cfg_guide_cust_title",
+  GUIDE_CUST_DESC: "papimeal_cfg_guide_cust_desc",
+  GUIDE_CUST_STEPS: "papimeal_cfg_guide_cust_steps",
+  GUIDE_ADMIN_TITLE: "papimeal_cfg_guide_admin_title",
+  GUIDE_ADMIN_DESC: "papimeal_cfg_guide_admin_desc",
+  GUIDE_ADMIN_STEPS: "papimeal_cfg_guide_admin_steps",
+  GUIDE_KITCHEN_TITLE: "papimeal_cfg_guide_kitchen_title",
+  GUIDE_KITCHEN_DESC: "papimeal_cfg_guide_kitchen_desc",
+  GUIDE_KITCHEN_STEPS: "papimeal_cfg_guide_kitchen_steps"
 };
 
 export interface AppTextConfig {
@@ -78,6 +90,18 @@ export interface AppTextConfig {
   roleAdminSub: string;
   demoGuideTitle: string;
   demoGuideText: string;
+  guideBtnText: string;
+  guideBannerBtnText: string;
+  guideModalTitle: string;
+  guideCustTitle: string;
+  guideCustDesc: string;
+  guideCustSteps: string;
+  guideAdminTitle: string;
+  guideAdminDesc: string;
+  guideAdminSteps: string;
+  guideKitchenTitle: string;
+  guideKitchenDesc: string;
+  guideKitchenSteps: string;
 }
 
 export function loadTextConfig(): AppTextConfig {
@@ -118,7 +142,19 @@ export function loadTextConfig(): AppTextConfig {
     roleAdminTitle: localStorage.getItem(CONFIG_KEYS.ROLE_ADMIN_TITLE) || "Ban Quản Trị",
     roleAdminSub: localStorage.getItem(CONFIG_KEYS.ROLE_ADMIN_SUB) || "Menu, giá cả & duyệt đơn",
     demoGuideTitle: localStorage.getItem(CONFIG_KEYS.DEMO_GUIDE_TITLE) || "Mách nhỏ cách trải nghiệm Demo:",
-    demoGuideText: localStorage.getItem(CONFIG_KEYS.DEMO_GUIDE_TEXT) || "1. Vào vai Khách Hàng để tạo 1 đơn hàng (có thể chọn đặt nhiều suất ăn khác nhau).\n2. Vào vai Ban Quản Trị để phê duyệt đơn hàng & tự động tổng hợp nguyên liệu đi chợ.\n3. Vào vai Màn Hình Bếp để chế biến và báo hoàn tất.\n4. Quay lại Tra Cứu Đơn để cập nhật tiến độ nấu nướng trực quan thời gian thực!"
+    demoGuideText: localStorage.getItem(CONFIG_KEYS.DEMO_GUIDE_TEXT) || "1. Vào vai Khách Hàng để tạo 1 đơn hàng (có thể chọn đặt nhiều suất ăn khác nhau).\n2. Vào vai Ban Quản Trị để phê duyệt đơn hàng & tự động tổng hợp nguyên liệu đi chợ.\n3. Vào vai Màn Hình Bếp để chế biến và báo hoàn tất.\n4. Quay lại Tra Cứu Đơn để cập nhật tiến độ nấu nướng trực quan thời gian thực!",
+    guideBtnText: localStorage.getItem(CONFIG_KEYS.GUIDE_BTN_TEXT) || "📖 Hướng Dẫn",
+    guideBannerBtnText: localStorage.getItem(CONFIG_KEYS.GUIDE_BANNER_BTN_TEXT) || "📖 Xem Cẩm Nang Vận Hành Chi Tiết 🚀",
+    guideModalTitle: localStorage.getItem(CONFIG_KEYS.GUIDE_MODAL_TITLE) || "CẨM NANG VẬN HÀNH CHI TIẾT",
+    guideCustTitle: localStorage.getItem(CONFIG_KEYS.GUIDE_CUST_TITLE) || "🍱 Concept: Tự Chọn Món Ăn Theo Gram/ml",
+    guideCustDesc: localStorage.getItem(CONFIG_KEYS.GUIDE_CUST_DESC) || "Khác với cơm hộp truyền thống đóng sẵn, tại **PaPiMeal**, mỗi suất ăn giống như một khay cơm trống được phát riêng. Khách hàng tự do gắp những món yêu thích bỏ vào khay của mình, tính tiền dựa trên trọng lượng chính xác (Gram/ml) được định giá sẵn.",
+    guideCustSteps: localStorage.getItem(CONFIG_KEYS.GUIDE_CUST_STEPS) || "1. Nhập Thông Tin & Số Lượng Khay trước\nBước đầu tiên, khách hàng sẽ khai báo họ tên, SĐT, ngày và giờ muốn nhận món, chọn hình thức giao hàng/nhận tại quán, ghi chú lưu ý và quan trọng nhất là chọn số lượng khay cơm muốn đặt (Số suất ăn).\n\n2. Lựa Chọn Món Vào Từng Khay Ăn Lẻ\nKhách hàng sẽ tự do định lượng món ăn (tôm rim, khoai tây, cơm trắng, thịt bò...) vào khay đầu tiên. Nếu đi nhóm đông muốn ăn giống hệt nhau: Chỉ cần chọn khay 1, rồi tích chọn \"Áp dụng giống Khẩu phần 1\" để đặt nhanh. Nếu muốn cá nhân hoá: Bấm \"Khẩu phần tiếp theo\" để tự gắp đồ ăn khác nhau cho khay số 2, khay số 3...\n\n3. Xác Nhận Hóa Đơn & Gửi Đơn\nHệ thống tổng hợp và bóc tách chi tiết giá tiền của từng khay cơm riêng biệt để khách dễ dàng cược/chia tiền. Khách bấm gửi đơn và nhận Mã Đơn Hàng duy nhất.\n\n4. Tra Cứu Realtime Live\nNhập SĐT để xem trực quan tiến trình bếp nấu: Chờ xử lý → Đang chuẩn bị → Đang nấu → Đã giao hoàn toàn trực quan!",
+    guideAdminTitle: localStorage.getItem(CONFIG_KEYS.GUIDE_ADMIN_TITLE) || "💰 Doanh Thu Thực Tế (Hoàn tất)",
+    guideAdminDesc: localStorage.getItem(CONFIG_KEYS.GUIDE_ADMIN_DESC) || "Để tránh lạm phát báo cáo khống, Doanh thu và Lợi nhuận chỉ được cộng dồn khi đơn hàng đạt trạng thái \"Hoàn tất\" (đã giao thành công và nhận tiền). Các đơn mới đặt hoặc đang giao sẽ không được tính làm doanh thu.",
+    guideAdminSteps: localStorage.getItem(CONFIG_KEYS.GUIDE_ADMIN_STEPS) || "• 1. Phê duyệt & Cập nhật đơn hàng: Tiếp nhận đơn mới từ khách hàng, duyệt đơn sang \"Đã xác nhận\", giao cho Shipper đổi thành \"Đang giao\" và cập nhật thành \"Hoàn tất\" khi thu tiền thành công.\n\n• 2. Thống kê đi chợ & Chuẩn bị nguyên liệu: Hệ thống tổng hợp sản lượng của tất cả đơn hàng hôm nay (loại trừ đơn hủy), tự động tính ra Trọng lượng nguyên liệu cần mua và Tổng tiền nguyên liệu đi chợ để Admin xuất quỹ ứng tiền mua sắm kịp thời.\n\n• 3. Đồng bộ 8 Báo Cáo Google Sheets: Mọi đơn hàng mới hoặc thay đổi trạng thái đều được tự động gửi và ghi nhận trên 8 Sheet báo cáo tự động sang Google Sheets của quán để lưu trữ vĩnh viễn.",
+    guideKitchenTitle: localStorage.getItem(CONFIG_KEYS.GUIDE_KITCHEN_TITLE) || "👨‍🍳 Tổ Bếp: Tiền Đi Chợ & Trạng Thái Live",
+    guideKitchenDesc: localStorage.getItem(CONFIG_KEYS.GUIDE_KITCHEN_DESC) || "Bếp không cần phải tự cộng sổ thủ công hay cộng tay trọng lượng nguyên liệu nữa. Chỉ cần nhìn vào góc bếp để chuẩn bị.",
+    guideKitchenSteps: localStorage.getItem(CONFIG_KEYS.GUIDE_KITCHEN_STEPS) || "• Thống kê ngân sách đi chợ: Bếp nhìn thấy ngay mục Tổng tiền nguyên liệu đi chợ ước tính ở ngay đầu để nắm trước ngân sách cần chuẩn bị đi mua sắm thực phẩm tươi ngon.\n\n• Chuẩn bị đúng định lượng: Danh sách nguyên liệu phân rã theo nhóm thịt, cá, rau củ để bếp thái, tẩm ướp và xào nấu đúng số lượng suất ăn, không sợ dư thừa lãng phí hao hụt.\n\n• Báo cáo tiến trình cho khách: Khi sơ chế xong, đang nấu, hay đã nấu xong, Bếp chỉ cần bấm đổi trạng thái trực quan ngay tại màn hình để khách hàng ở văn phòng yên tâm theo dõi."
   };
 }
 
@@ -160,5 +196,17 @@ export function saveTextConfig(config: AppTextConfig) {
   localStorage.setItem(CONFIG_KEYS.ROLE_ADMIN_SUB, config.roleAdminSub.trim());
   localStorage.setItem(CONFIG_KEYS.DEMO_GUIDE_TITLE, config.demoGuideTitle.trim());
   localStorage.setItem(CONFIG_KEYS.DEMO_GUIDE_TEXT, config.demoGuideText.trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_BTN_TEXT, (config.guideBtnText || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_BANNER_BTN_TEXT, (config.guideBannerBtnText || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_MODAL_TITLE, (config.guideModalTitle || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_CUST_TITLE, (config.guideCustTitle || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_CUST_DESC, (config.guideCustDesc || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_CUST_STEPS, (config.guideCustSteps || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_ADMIN_TITLE, (config.guideAdminTitle || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_ADMIN_DESC, (config.guideAdminDesc || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_ADMIN_STEPS, (config.guideAdminSteps || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_KITCHEN_TITLE, (config.guideKitchenTitle || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_KITCHEN_DESC, (config.guideKitchenDesc || "").trim());
+  localStorage.setItem(CONFIG_KEYS.GUIDE_KITCHEN_STEPS, (config.guideKitchenSteps || "").trim());
   syncConfigToFirestore();
 }
