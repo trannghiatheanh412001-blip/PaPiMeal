@@ -13,16 +13,19 @@ export function saveGoogleSheetsUrl(url: string) {
   syncConfigToFirestore();
 }
 
-export async function sendToGoogleSheets(actionType: "NEW_ORDER" | "UPDATE_STATUS", order: Order) {
+export async function sendToGoogleSheets(actionType: "NEW_ORDER" | "UPDATE_STATUS" | "BULK_SYNC", order?: Order) {
   const url = getGoogleSheetsUrl();
   if (!url) return;
 
   try {
     // 1. Prepare portion text for legacy email notifications
-    const portionsText = order.portions.map((portion, idx) => {
-      const itemsStr = portion.map(it => `${it.name} (x${it.qty})`).join(", ");
-      return `[Khẩu phần ${idx + 1}]: ${itemsStr}`;
-    }).join(" | ");
+    let portionsText = "";
+    if (order && order.portions) {
+      portionsText = order.portions.map((portion, idx) => {
+        const itemsStr = portion.map(it => `${it.name} (x${it.qty})`).join(", ");
+        return `[Khẩu phần ${idx + 1}]: ${itemsStr}`;
+      }).join(" | ");
+    }
 
     // 2. Load all entities for multi-tab synchronization
     const products = loadProducts();
@@ -218,18 +221,18 @@ export async function sendToGoogleSheets(actionType: "NEW_ORDER" | "UPDATE_STATU
     const payload = {
       action: actionType,
       timestamp: new Date().toISOString().replace("T", " ").substring(0, 19),
-      orderId: order.id,
-      customerName: order.customerName,
-      phone: order.phone,
-      receiveDate: order.receiveDate,
-      receiveTime: order.receiveTime,
-      session: order.session,
-      deliveryMethod: order.deliveryMethod,
-      address: order.address || "",
-      notes: order.notes || "",
-      status: order.status,
-      portionsCount: order.portionsCount,
-      totalAmount: order.totalAmount,
+      orderId: order?.id || "",
+      customerName: order?.customerName || "",
+      phone: order?.phone || "",
+      receiveDate: order?.receiveDate || "",
+      receiveTime: order?.receiveTime || "",
+      session: order?.session || "",
+      deliveryMethod: order?.deliveryMethod || "",
+      address: order?.address || "",
+      notes: order?.notes || "",
+      status: order?.status || "",
+      portionsCount: order?.portionsCount || 0,
+      totalAmount: order?.totalAmount || 0,
       portionsText,
       adminNotificationEmail: localStorage.getItem("papimeal_admin_email") || "",
       sheets: {
@@ -253,7 +256,7 @@ export async function sendToGoogleSheets(actionType: "NEW_ORDER" | "UPDATE_STATU
       },
       body: JSON.stringify(payload)
     });
-    console.log(`[Google Sheets Multi-Sync] Bulk synced 8 sheets for order: ${order.id}`);
+    console.log(`[Google Sheets Multi-Sync] Bulk synced 8 sheets successfully. Action: ${actionType}${order ? ` for order: ${order.id}` : ""}`);
   } catch (error) {
     console.error("[Google Sheets Multi-Sync] Error during sync process:", error);
   }

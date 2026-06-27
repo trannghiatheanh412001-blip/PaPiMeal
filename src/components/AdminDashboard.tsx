@@ -661,59 +661,85 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   // Tab 4: Detailed Production & Profit analysis for Admin
   const getProductionStats = () => {
     const dayOrders = orders.filter(o => {
-      if (o.status === STATUS_CANCEL) return false;
       if (productionStartDate && o.receiveDate < productionStartDate) return false;
       if (productionEndDate && o.receiveDate > productionEndDate) return false;
       return true;
     });
-    
-    // Sum product quantities
-    const qtyMap: { [prodId: string]: number } = {};
-    let totalPortionsCount = 0;
-    
-    dayOrders.forEach(o => {
-      totalPortionsCount += o.portionsCount;
+
+    const activeOrdersForProcurement = dayOrders.filter(o => o.status !== STATUS_CANCEL);
+    const completedOrdersForRevenue = dayOrders.filter(o => o.status === "Hoàn tất");
+
+    // Sum product quantities for Completed orders (Revenue)
+    const qtyMapCompleted: { [prodId: string]: number } = {};
+    completedOrdersForRevenue.forEach(o => {
       o.portions.forEach(p => {
         p.forEach(it => {
-          qtyMap[it.id] = (qtyMap[it.id] || 0) + it.qty;
+          qtyMapCompleted[it.id] = (qtyMapCompleted[it.id] || 0) + it.qty;
         });
       });
     });
 
-    // Detailed lists with costs & profits
+    // Sum product quantities for All Active orders (Procurement/Go to Market)
+    const qtyMapActive: { [prodId: string]: number } = {};
+    let totalPortionsCount = 0;
+    activeOrdersForProcurement.forEach(o => {
+      totalPortionsCount += o.portionsCount;
+      o.portions.forEach(p => {
+        p.forEach(it => {
+          qtyMapActive[it.id] = (qtyMapActive[it.id] || 0) + it.qty;
+        });
+      });
+    });
+
+    // Financial calculations (Completed orders ONLY)
     let totalProfit = 0;
-    let totalSellingSum = 0;
-    let totalCostSum = 0;
+    let totalSellingSum = 0; // Doanh thu
+    let totalCostSum = 0;    // Chi phí của các đơn hoàn tất (gốc + chế biến)
+
+    // Procurement calculations (All active orders)
+    let totalIngredientCostNeed = 0; // Tổng tiền nguyên liệu cần chuẩn bị đi chợ
 
     const itemsSummary = products.map(p => {
-      const totalQty = qtyMap[p.id] || 0;
-      const singleCost = p.cost + p.fee;
-      const totalCost = totalQty * singleCost;
-      const totalRevenue = totalQty * p.price;
-      const itemProfit = totalRevenue - totalCost;
+      const qtyCompleted = qtyMapCompleted[p.id] || 0;
+      const qtyActive = qtyMapActive[p.id] || 0;
 
-      if (totalQty > 0) {
-        totalProfit += itemProfit;
-        totalSellingSum += totalRevenue;
-        totalCostSum += totalCost;
+      const singleCost = p.cost + p.fee;
+      const totalCostCompleted = qtyCompleted * singleCost;
+      const totalRevenueCompleted = qtyCompleted * p.price;
+      const itemProfitCompleted = totalRevenueCompleted - totalCostCompleted;
+
+      const itemRawCostActive = qtyActive * p.cost;
+
+      if (qtyCompleted > 0) {
+        totalProfit += itemProfitCompleted;
+        totalSellingSum += totalRevenueCompleted;
+        totalCostSum += totalCostCompleted;
+      }
+
+      if (qtyActive > 0) {
+        totalIngredientCostNeed += itemRawCostActive;
       }
 
       return {
         product: p,
-        totalQty,
-        totalWeight: totalQty * p.weight,
-        totalCost,
-        totalRevenue,
-        itemProfit
+        qtyCompleted,
+        qtyActive,
+        totalWeightCompleted: qtyCompleted * p.weight,
+        totalWeightActive: qtyActive * p.weight,
+        totalCostCompleted,
+        totalRevenueCompleted,
+        itemProfitCompleted,
+        itemRawCostActive
       };
-    }).filter(it => it.totalQty > 0);
+    }).filter(it => it.qtyCompleted > 0 || it.qtyActive > 0);
 
     return {
       items: itemsSummary,
       totalPortionsCount,
       totalSellingSum,
       totalCostSum,
-      totalProfit
+      totalProfit,
+      totalIngredientCostNeed
     };
   };
 
@@ -1519,29 +1545,35 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                 {/* Financial KPI Summary Cards */}
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-green-50 border border-green-200/50 p-2.5 rounded-xl">
-                    <span className="text-[9px] font-bold text-green-700 block uppercase tracking-wider">Doanh Thu</span>
+                    <span className="text-[9px] font-bold text-green-700 block uppercase tracking-wider">Doanh Thu (Hoàn tất)</span>
                     <span className="text-xs font-black text-green-800 block mt-0.5">
                       {prodStats.totalSellingSum.toLocaleString("vi-VN")}đ
                     </span>
                   </div>
                   <div className="bg-red-50 border border-red-200/50 p-2.5 rounded-xl">
-                    <span className="text-[9px] font-bold text-red-700 block uppercase tracking-wider">Chi Phí (Gốc)</span>
+                    <span className="text-[9px] font-bold text-red-700 block uppercase tracking-wider">Chi Phí (Hoàn tất)</span>
                     <span className="text-xs font-black text-red-800 block mt-0.5">
                       {prodStats.totalCostSum.toLocaleString("vi-VN")}đ
                     </span>
                   </div>
                   <div className="bg-[#00523b]/10 border border-[#00523b]/20 p-2.5 rounded-xl">
-                    <span className="text-[9px] font-bold text-[#00523b] block uppercase tracking-wider">Lợi Nhuận</span>
+                    <span className="text-[9px] font-bold text-[#00523b] block uppercase tracking-wider">Lợi Nhuận Thực</span>
                     <span className="text-xs font-black text-[#00523b] block mt-0.5">
                       {prodStats.totalProfit.toLocaleString("vi-VN")}đ
                     </span>
                   </div>
                 </div>
 
-                {/* Packaging count */}
-                <div className="bg-teal-50 border-l-3 border-teal-600 p-2.5 rounded-r-xl text-[11px] flex justify-between font-bold text-[#394013]">
-                  <span>Tổng số hộp đóng cơm:</span>
-                  <span className="text-teal-900">{prodStats.totalPortionsCount} chiếc</span>
+                {/* Packaging count & Ingredient budget */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="bg-teal-50 border-l-3 border-teal-600 p-2.5 rounded-r-xl text-[11px] flex justify-between items-center font-bold text-[#394013]">
+                    <span>Tổng hộp đóng cơm:</span>
+                    <span className="text-teal-950 font-black">{prodStats.totalPortionsCount} chiếc</span>
+                  </div>
+                  <div className="bg-amber-50 border-l-3 border-amber-600 p-2.5 rounded-r-xl text-[11px] flex justify-between items-center font-bold text-[#394013]">
+                    <span>Tiền mua nguyên liệu:</span>
+                    <span className="text-amber-950 font-black">{(prodStats.totalIngredientCostNeed || 0).toLocaleString("vi-VN")}đ</span>
+                  </div>
                 </div>
 
                 {/* Detailed Products Margin Table */}
@@ -1549,15 +1581,26 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                   <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Bảng định lượng chi tiết sản lượng</span>
                   <div className="space-y-1.5">
                     {prodStats.items.map(it => (
-                      <div key={it.product.id} className="bg-white p-3 rounded-xl border border-gray-100 flex flex-col gap-1 text-xs">
+                      <div key={it.product.id} className="bg-white p-3 rounded-xl border border-gray-100 flex flex-col gap-1.5 text-xs">
                         <div className="flex justify-between items-center font-bold">
                           <span className="text-[#394013]">{it.product.name}</span>
-                          <span className="text-[#00523b] bg-[#00523b]/10 px-2 py-0.5 rounded text-[10px]">x{it.totalQty} phần</span>
+                          <div className="flex gap-1.5">
+                            <span className="text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded text-[9px] font-bold">Cần làm: {it.qtyActive} phần</span>
+                            {it.qtyCompleted > 0 && (
+                              <span className="text-green-700 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded text-[9px] font-bold">Đã hoàn thành: {it.qtyCompleted} phần</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex justify-between text-[10px] text-gray-500 font-semibold pt-1">
-                          <span>Định lượng: {it.totalWeight} {it.product.unit === 'g' || it.product.unit === 'gram' ? 'g' : it.product.unit}</span>
-                          <span>Doanh thu: {it.totalRevenue.toLocaleString("vi-VN")}đ</span>
-                          <span className="text-green-700">Lãi: +{it.itemProfit.toLocaleString("vi-VN")}đ</span>
+                        <div className="flex justify-between text-[10px] text-gray-500 font-semibold pt-1 border-t border-gray-50">
+                          <span>Nguyên liệu: {it.totalWeightActive} {it.product.unit === 'g' || it.product.unit === 'gram' ? 'g' : it.product.unit} (chi phí: {it.itemRawCostActive.toLocaleString("vi-VN")}đ)</span>
+                          {it.qtyCompleted > 0 ? (
+                            <>
+                              <span>Doanh thu: {it.totalRevenueCompleted.toLocaleString("vi-VN")}đ</span>
+                              <span className="text-green-700 font-bold">Lãi: +{it.itemProfitCompleted.toLocaleString("vi-VN")}đ</span>
+                            </>
+                          ) : (
+                            <span className="text-gray-400">Chưa có đơn hoàn tất</span>
+                          )}
                         </div>
                       </div>
                     ))}

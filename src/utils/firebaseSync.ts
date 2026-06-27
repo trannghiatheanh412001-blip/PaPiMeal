@@ -8,6 +8,7 @@ import {
   writeBatch
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { sendToGoogleSheets } from "./googleSheets";
 import { Order, Product, Category, StatusLog, Account } from "../types";
 import { DEFAULT_PRODUCTS, DEFAULT_CATEGORIES } from "../data/defaults";
 
@@ -265,6 +266,7 @@ export async function syncOrderToFirestore(order: Order) {
   try {
     await setDoc(doc(db, "orders", order.id), toFirestoreOrder(order));
     console.log(`📤 Order ${order.id} saved to Firestore.`);
+    sendToGoogleSheets("BULK_SYNC", order);
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `orders/${order.id}`);
   }
@@ -274,6 +276,7 @@ export async function deleteOrderFromFirestore(orderId: string) {
   try {
     await deleteDoc(doc(db, "orders", orderId));
     console.log(`🗑️ Order ${orderId} deleted from Firestore.`);
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, `orders/${orderId}`);
   }
@@ -282,6 +285,7 @@ export async function deleteOrderFromFirestore(orderId: string) {
 export async function syncProductToFirestore(product: Product) {
   try {
     await setDoc(doc(db, "products", product.id), product);
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `products/${product.id}`);
   }
@@ -290,6 +294,7 @@ export async function syncProductToFirestore(product: Product) {
 export async function deleteProductFromFirestore(productId: string) {
   try {
     await deleteDoc(doc(db, "products", productId));
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, `products/${productId}`);
   }
@@ -298,6 +303,7 @@ export async function deleteProductFromFirestore(productId: string) {
 export async function syncCategoryToFirestore(category: Category) {
   try {
     await setDoc(doc(db, "categories", category.id), category);
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `categories/${category.id}`);
   }
@@ -306,6 +312,7 @@ export async function syncCategoryToFirestore(category: Category) {
 export async function deleteCategoryFromFirestore(categoryId: string) {
   try {
     await deleteDoc(doc(db, "categories", categoryId));
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, `categories/${categoryId}`);
   }
@@ -330,6 +337,7 @@ export async function deleteAccountFromFirestore(phone: string) {
 export async function syncLogToFirestore(log: StatusLog) {
   try {
     await setDoc(doc(db, "logs", log.id), log);
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `logs/${log.id}`);
   }
@@ -341,6 +349,7 @@ export async function deleteAllLogsFromFirestore() {
     const batch = writeBatch(db);
     qSnapshot.forEach((d) => batch.delete(d.ref));
     await batch.commit();
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, "logs");
   }
@@ -352,6 +361,7 @@ export async function deleteAllOrdersFromFirestore() {
     const batch = writeBatch(db);
     qSnapshot.forEach((d) => batch.delete(d.ref));
     await batch.commit();
+    sendToGoogleSheets("BULK_SYNC");
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, "orders");
   }

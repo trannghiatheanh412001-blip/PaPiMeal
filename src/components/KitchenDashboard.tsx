@@ -353,6 +353,8 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
       });
     });
 
+    let totalIngredientCost = 0;
+
     // Group sums by category
     const groupedSummary = allCats.map(cat => {
       const catProducts = allProds.filter(p => p.category === cat.id);
@@ -360,12 +362,15 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
         .map(p => {
           const totalQty = summaryMap[p.id] || 0;
           const totalWeight = totalQty * p.weight;
+          const itemCost = totalQty * (p.cost || 0);
+          totalIngredientCost += itemCost;
           return {
             productId: p.id,
             name: p.name,
             totalQty,
             totalWeight,
-            unit: p.unit
+            unit: p.unit,
+            cost: itemCost
           };
         })
         .filter(it => it.totalQty > 0);
@@ -382,7 +387,8 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
 
     return {
       groups: groupedSummary,
-      totalPortionsCount
+      totalPortionsCount,
+      totalIngredientCost
     };
   };
 
@@ -827,6 +833,22 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
                   </div>
                   <p className="text-[10px] text-teal-700/80 font-medium">
                     * Bếp tự động ước lượng 1 hộp giấy chuyên dụng cho mỗi khẩu phần đặt mua.
+                  </p>
+                </div>
+
+                {/* Total Ingredient Money for going to market */}
+                <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-xs space-y-1.5">
+                  <span className="font-extrabold text-amber-800 flex items-center gap-1.5 text-sm">
+                    💰 Tổng tiền nguyên liệu đi chợ:
+                  </span>
+                  <div className="flex justify-between font-extrabold text-[#394013] text-sm">
+                    <span>Ước tính ngân sách mua hàng:</span>
+                    <span className="text-amber-700 text-base font-black">
+                      {(summaryData.totalIngredientCost || 0).toLocaleString("vi-VN")}đ
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-amber-600/80 font-medium">
+                    * Tính bằng tổng số lượng suất cơm nhân với giá nhập nguyên liệu của từng món ăn.
                   </p>
                 </div>
 
