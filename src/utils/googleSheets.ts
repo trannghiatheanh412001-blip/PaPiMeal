@@ -327,7 +327,7 @@ function doPost(e) {
       if (recipient.length > 3 && recipient.indexOf("@") !== -1) {
         var subject = "🔔 [ĐƠN HÀNG MỚI] Khách " + data.customerName + " đã đặt đơn " + data.orderId;
         var htmlBody = 
-          "<div style='font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; border: 1.5px solid #00523b; border-radius: 16px; padding: 24px; background-color: #fcfef1; color: #394013;'>" +
+          "<div style='font-family: Arial, Helvetica, sans-serif; max-width: 600px; border: 1.5px solid #00523b; border-radius: 16px; padding: 24px; background-color: #fcfef1; color: #394013;'>" +
           "<div style='text-align: center; border-bottom: 2.5px solid #00523b; padding-bottom: 16px; margin-bottom: 20px;'>" +
           "  <h1 style='color: #00523b; margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;'>🍱 PAPIMEAL - CƠM TRƯA NGÀY MAI</h1>" +
           "  <p style='margin: 4px 0 0 0; font-size: 13px; font-weight: bold; color: #394013/80; text-transform: uppercase;'>Đã nhận đơn hàng mới thành công!</p>" +
