@@ -57,8 +57,8 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
   const [loggedInRole, setLoggedInRole] = useState<"ADMIN" | "KITCHEN" | "PACKER" | "SHIPPER" | null>(null);
   const [loggedInName, setLoggedInName] = useState("");
 
-  // Subtab navigation: 'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets' | 'accounts'
-  const [activeTab, setActiveTab] = useState<'products' | 'add' | 'orders' | 'crm' | 'production' | 'sheets' | 'accounts'>('products');
+  // Subtab navigation: 'products' | 'add' | 'giao_dien' | 'orders' | 'crm' | 'production' | 'sheets' | 'accounts'
+  const [activeTab, setActiveTab] = useState<'products' | 'add' | 'giao_dien' | 'orders' | 'crm' | 'production' | 'sheets' | 'accounts'>('products');
 
   // Staff accounts management state
   const [accountsList, setAccountsList] = useState<any[]>([]);
@@ -843,6 +843,16 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         )}
         {loggedInRole === "ADMIN" && (
           <button
+            onClick={() => setActiveTab('giao_dien')}
+            className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
+              activeTab === 'giao_dien' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
+            }`}
+          >
+            🖼️ Giao diện
+          </button>
+        )}
+        {loggedInRole === "ADMIN" && (
+          <button
             onClick={() => setActiveTab('add')}
             className={`flex-1 min-w-[50px] py-2 text-[8px] sm:text-[9px] font-bold rounded-lg transition duration-150 cursor-pointer text-center ${
               activeTab === 'add' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:bg-[#00523b]/10"
@@ -915,10 +925,10 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
             </div>
             <button
               type="button"
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer w-full sm:w-auto shadow-sm transition"
+              onClick={() => setActiveTab('giao_dien')}
+              className="px-3 py-1.5 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer w-full sm:w-auto shadow-sm transition"
             >
-              📂 QUẢN LÝ DANH MỤC
+              🖼️ QUẢN LÝ GIAO DIỆN & DANH MỤC
             </button>
           </div>
 
@@ -990,6 +1000,796 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB: GIAO DIỆN & DANH MỤC ======================= */}
+      {activeTab === 'giao_dien' && (
+        <div className="space-y-4 animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-1 border-b border-[#00523b]/10">
+            <div>
+              <h4 className="text-xs font-bold text-[#00523b] uppercase tracking-wider">
+                Quản lý Giao diện & Danh mục món ăn
+              </h4>
+              <span className="text-[10px] text-[#394013]/50 font-bold">* Thiết lập danh mục sản phẩm và chỉnh sửa thông tin giao diện khách hàng</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('products')}
+              className="px-3 py-1.5 bg-[#00523b] hover:bg-[#003d2b] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer w-full sm:w-auto shadow-sm transition"
+            >
+              ⬅️ QUAY LẠI MENU
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            {/* Cột trái: Quản lý danh mục */}
+            <div className="lg:col-span-1 space-y-4">
+              {/* Form thêm mới danh mục */}
+              <form onSubmit={handleAddCategory} className="bg-[#fcfef1] p-4 rounded-2xl border border-[#00523b]/10 shadow-sm space-y-3">
+                <label className="block text-xs font-black text-[#00523b] uppercase tracking-wider">
+                  ➕ Thêm danh mục món mới:
+                </label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Lẩu & Súp 🍲, Món cuốn 🌯..."
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    className="px-3 py-2.5 border border-[#00523b]/20 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-bold rounded-lg text-xs transition cursor-pointer shadow"
+                  >
+                    TẠO DANH MỤC ✨
+                  </button>
+                </div>
+              </form>
+
+              {/* Danh sách danh mục */}
+              <div className="bg-[#fcfef1] p-4 rounded-2xl border border-[#00523b]/10 shadow-sm space-y-3">
+                <span className="block text-xs font-black text-gray-400 uppercase tracking-wider">
+                  Danh sách danh mục hiện tại:
+                </span>
+                
+                {categories.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-gray-400 font-bold">
+                    Chưa có danh mục nào. Hãy tạo danh mục món ăn đầu tiên của bạn!
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {categories.map(cat => {
+                      const count = products.filter(p => p.category === cat.id).length;
+                      const isEditingThis = editingCatId === cat.id;
+
+                      return (
+                        <div 
+                          key={cat.id} 
+                          className="flex items-center justify-between p-3 bg-white rounded-xl border border-[#00523b]/10 shadow-sm gap-2"
+                        >
+                          {isEditingThis ? (
+                            <div className="flex-1 flex gap-1.5 items-center">
+                              <input
+                                type="text"
+                                value={editingCatName}
+                                onChange={e => setEditingCatName(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-[#00523b]/30 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-semibold"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEditCategory(cat.id)}
+                                className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition cursor-pointer shadow"
+                                title="Lưu"
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCatId(null);
+                                  setEditingCatName("");
+                                }}
+                                className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition cursor-pointer"
+                                title="Hủy"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-extrabold text-[#00523b] block truncate">{cat.name}</span>
+                                <span className="text-[9px] text-[#394013]/60 font-bold">Chứa {count} món ăn trong thực đơn</span>
+                              </div>
+                              <div className="flex gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => startEditCategory(cat)}
+                                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer border border-blue-100"
+                                  title="Đổi tên"
+                                >
+                                  <Edit2 size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCategory(cat.id)}
+                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer border border-red-100"
+                                  title="Xóa"
+                                >
+                                  <Trash2 size={11} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Cột phải: Tùy biến câu chữ & giao diện */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* ======================= CHỈNH SỬA TIÊU ĐỀ & CÂU CHỮ ======================= */}
+              <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-4">
+                <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5 uppercase tracking-wider">
+                  ✍️ Tùy Biến Giao Diện &amp; Ảnh/Logo Khách Hàng
+                </h4>
+                <p className="text-xs text-[#394013]/80 leading-relaxed font-medium">
+                  Bạn có thể dễ dàng thay đổi tên thương hiệu, slogan, tải lên URL logo mới, đổi emoji, hoặc chỉnh sửa nội dung giới thiệu mà khách hàng sẽ thấy. Chỉ có Admin sau khi đăng nhập mới có quyền thay đổi các cài đặt này!
+                </p>
+
+                <div className="space-y-4 pt-1">
+                  {/* PHẦN 1: THƯƠNG HIỆU & LOGO */}
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
+                    <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                      📌 Thương hiệu &amp; Logo hình ảnh
+                    </h5>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên ứng dụng chính (VD: PaPiMeal):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.appName}
+                        onChange={e => setTextConfig(prev => ({ ...prev, appName: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Slogan hiển thị (VD: Cơm Trưa Ngày Mai):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.slogan}
+                        onChange={e => setTextConfig(prev => ({ ...prev, slogan: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Logo góc trên bên trái (Nhập emoji hoặc link ảnh):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.headerLogo}
+                        onChange={e => setTextConfig(prev => ({ ...prev, headerLogo: e.target.value }))}
+                        placeholder="Nhập chữ, emoji hoặc link hình ảnh (http...)"
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
+                      />
+                      <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Ví dụ: <code className="bg-gray-100 px-1 rounded">P</code> hoặc link ảnh <code className="bg-gray-100 px-1 rounded">https://ten-mien.com/logo.png</code></span>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Logo tròn chính giữa trang chủ (Nhập emoji hoặc link ảnh):</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          value={textConfig.homeRoundLogo}
+                          onChange={e => setTextConfig(prev => ({ ...prev, homeRoundLogo: e.target.value }))}
+                          placeholder="Nhập emoji hoặc link hình ảnh (http...)"
+                          className="flex-1 px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTextConfig(prev => ({ ...prev, homeRoundLogo: "/src/assets/images/papimeal_logo_1782435524190.jpg" }));
+                            alert("🎉 Đã chọn logo Bento PaPiMeal 🍱 mẫu! Hãy bấm nút [Lưu Toàn Bộ Cấu Hình 💾] ở bên dưới cùng để áp dụng nhé!");
+                          }}
+                          className="px-2.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] transition cursor-pointer shrink-0"
+                        >
+                          Sử dụng Logo PaPiMeal 🍱
+                        </button>
+                      </div>
+                      <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Bạn có thể dán link ảnh tùy ý, hoặc bấm nút màu cam ở trên để sử dụng ngay bức ảnh Logo Bento PaPiMeal 🍱 sắc nét được thiết kế riêng!</span>
+                    </div>
+                  </div>
+
+                  {/* PHẦN 2: BANNER TRANG CHỦ */}
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
+                    <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                      🎨 Banner Quảng Cáo &amp; Khẩu hiệu chính
+                    </h5>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Banner Trang Chủ:</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.homeBannerTitle}
+                        onChange={e => setTextConfig(prev => ({ ...prev, homeBannerTitle: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Mô tả Banner Trang Chủ:</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.homeBannerSubtitle}
+                        onChange={e => setTextConfig(prev => ({ ...prev, homeBannerSubtitle: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Hình nền / Icon mờ góc Banner (Nhập emoji hoặc link ảnh):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.homeBannerImage}
+                        onChange={e => setTextConfig(prev => ({ ...prev, homeBannerImage: e.target.value }))}
+                        placeholder="Ví dụ: 🥗 hoặc link hình ảnh"
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* PHẦN 3: 3 KHỐI LỢI ÍCH TRANG CHỦ */}
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-4">
+                    <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                      ⭐ 3 Khối Lợi Ích &amp; Cam Kết (Trang chủ khách hàng)
+                    </h5>
+
+                    {/* Khối 1 */}
+                    <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
+                      <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 1</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-1">
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
+                          <input 
+                            type="text"
+                            value={textConfig.valueProp1Icon}
+                            onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Icon: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
+                          <input 
+                            type="text"
+                            value={textConfig.valueProp1Title}
+                            onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Title: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
+                        <input 
+                          type="text"
+                          value={textConfig.valueProp1Desc}
+                          onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Desc: e.target.value }))}
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Khối 2 */}
+                    <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
+                      <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 2</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-1">
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
+                          <input 
+                            type="text"
+                            value={textConfig.valueProp2Icon}
+                            onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Icon: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
+                          <input 
+                            type="text"
+                            value={textConfig.valueProp2Title}
+                            onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Title: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
+                        <input 
+                          type="text"
+                          value={textConfig.valueProp2Desc}
+                          onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Desc: e.target.value }))}
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Khối 3 */}
+                    <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
+                      <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 3</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-1">
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
+                          <input 
+                            type="text"
+                            value={textConfig.valueProp3Icon}
+                            onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Icon: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
+                          <input 
+                            type="text"
+                            value={textConfig.valueProp3Title}
+                            onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Title: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
+                        <input 
+                          type="text"
+                          value={textConfig.valueProp3Desc}
+                          onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Desc: e.target.value }))}
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PHẦN 4: THÔNG BÁO & QUY TRÌNH */}
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
+                    <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                      💬 Quy trình đặt, Thông báo, Nút nhấn &amp; Liên hệ
+                    </h5>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước 1 (Chọn lượng &amp; Hẹn giờ):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.step1Title}
+                        onChange={e => setTextConfig(prev => ({ ...prev, step1Title: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước 1 (Giải thích khẩu phần):</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.step1Sub}
+                        onChange={e => setTextConfig(prev => ({ ...prev, step1Sub: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                      />
+                    </div>
+
+                    {/* Bước 2 */}
+                    <div className="border-t border-gray-100 pt-3">
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước 2 (Chọn món theo phần):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.step2Title}
+                        onChange={e => setTextConfig(prev => ({ ...prev, step2Title: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước 2 (Mô tả chọn món):</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.step2Sub}
+                        onChange={e => setTextConfig(prev => ({ ...prev, step2Sub: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                      />
+                    </div>
+
+                    {/* Xác nhận */}
+                    <div className="border-t border-gray-100 pt-3">
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước Xác nhận hóa đơn:</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.confirmTitle}
+                        onChange={e => setTextConfig(prev => ({ ...prev, confirmTitle: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước Xác nhận hóa đơn:</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.confirmSub}
+                        onChange={e => setTextConfig(prev => ({ ...prev, confirmSub: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                      />
+                    </div>
+
+                    {/* Các nút bấm */}
+                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên nút đặt món chính:</label>
+                        <input 
+                          type="text" 
+                          value={textConfig.startOrderBtn}
+                          onChange={e => setTextConfig(prev => ({ ...prev, startOrderBtn: e.target.value }))}
+                          className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên nút quay lại trang chủ:</label>
+                        <input 
+                          type="text" 
+                          value={textConfig.homeBackBtn}
+                          onChange={e => setTextConfig(prev => ({ ...prev, homeBackBtn: e.target.value }))}
+                          className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Địa chỉ & Điện thoại */}
+                    <div className="border-t border-gray-100 pt-3">
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Địa chỉ bếp (Hiện khi chọn Ghé lấy):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.shopAddress}
+                        onChange={e => setTextConfig(prev => ({ ...prev, shopAddress: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Điện thoại liên hệ của bếp:</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.shopPhone}
+                        onChange={e => setTextConfig(prev => ({ ...prev, shopPhone: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
+                      />
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-3">
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Thông báo khi khách Đặt đơn Thành Công:</label>
+                      <textarea 
+                        rows={2}
+                        value={textConfig.successMessage}
+                        onChange={e => setTextConfig(prev => ({ ...prev, successMessage: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* PHẦN 5: VAI TRÒ & HƯỚNG DẪN DEMO */}
+                  <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-4">
+                    <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
+                      💡 Tùy chỉnh Các Vai Trò &amp; Hướng dẫn Demo ở Trang Chủ
+                    </h5>
+                    
+                    <div className="p-2.5 bg-emerald-50/50 rounded-lg space-y-3">
+                      <span className="text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold text-emerald-800">1. Vai trò "Khách Hàng"</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleCustomerTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleCustomerTitle: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleCustomerSub || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleCustomerSub: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 bg-amber-50/50 rounded-lg space-y-3">
+                      <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded font-bold text-amber-800">2. Vai trò "Tra Cứu Đơn"</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleTrackingTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleTrackingTitle: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleTrackingSub || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleTrackingSub: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 bg-teal-50/50 rounded-lg space-y-3">
+                      <span className="text-[10px] bg-teal-100 px-1.5 py-0.5 rounded font-bold text-teal-800">3. Vai trò "Màn Hình Bếp"</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleKitchenTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleKitchenTitle: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleKitchenSub || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleKitchenSub: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 bg-blue-50/50 rounded-lg space-y-3">
+                      <span className="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded font-bold text-blue-800">4. Vai trò "Ban Quản Trị"</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleAdminTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleAdminTitle: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
+                          <input 
+                            type="text"
+                            value={textConfig.roleAdminSub || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, roleAdminSub: e.target.value }))}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ======================= GỢI Ý NÂNG CẤP PHÂN QUYỀN VẬN HÀNH BẾP ĐA NGƯỜI DÙNG ======================= */}
+                    <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 space-y-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="p-1 bg-amber-500 text-white rounded font-bold text-[10px] animate-pulse">✨ GỢI Ý NÂNG CẤP ĐA NGƯỜI DÙNG</span>
+                      </div>
+                      <h6 className="text-[11px] font-extrabold text-amber-900 leading-tight">
+                        Mô Hình Vận Hành Phân Quyền Giữa Bếp, Nhân Viên Đóng Gói (Packer) &amp; Shipper
+                      </h6>
+                      <p className="text-[10px] text-amber-800/90 leading-relaxed">
+                        Khi quy mô của <b>Cơm Niêu PaPi</b> mở rộng, bạn sẽ có nhiều người sử dụng chung hệ thống cùng lúc. Đây là sơ đồ thiết kế đề xuất để tối ưu hóa quy trình đóng gói &amp; giao hàng không sai sót:
+                      </p>
+                      
+                      <div className="space-y-2 pt-1 border-t border-amber-200/50">
+                        <div className="flex items-start gap-1.5 text-[10px]">
+                          <span className="text-amber-600 shrink-0 mt-0.5">👨‍🍳</span>
+                          <div>
+                            <strong className="text-amber-950 block">1. Vai Trò Bộ Phận Bếp (Kitchen Admin):</strong>
+                            <span className="text-amber-800/80">Chỉ xem danh sách món ăn cần nấu tổng hợp theo ngày (Màn hình Chế biến). Khi nấu xong món nào, đầu bếp nhấn <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Hoàn tất nấu"</span>, trạng thái món lập tức chuyển sang chờ đóng gói.</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-1.5 text-[10px]">
+                          <span className="text-amber-600 shrink-0 mt-0.5">📦</span>
+                          <div>
+                            <strong className="text-amber-950 block">2. Vai Trò Nhân Viên Xếp Đơn &amp; Đóng Gói (Packer):</strong>
+                            <span className="text-amber-800/80">Sử dụng màn hình riêng để quét mã đơn hoặc xem danh sách các đơn đã chuẩn bị đầy đủ món. Packer xếp bento vào túi kèm hóa đơn, gạt trạng thái đơn sang <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Đã đóng gói - Chờ giao"</span>.</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-1.5 text-[10px]">
+                          <span className="text-amber-600 shrink-0 mt-0.5">🚴</span>
+                          <div>
+                            <strong className="text-amber-950 block">3. Vai Trò Shipper (Người giao hàng):</strong>
+                            <span className="text-amber-800/80">Truy cập giao diện đơn giản trên điện thoại, chỉ hiển thị danh sách địa chỉ cần giao của hôm nay. Shipper nhận đơn đi giao, cập nhật <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Đang giao"</span> và <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Giao thành công"</span> để báo cáo doanh thu tức thời.</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-amber-200/50 bg-amber-500/5 p-2 rounded-lg text-[9px] text-amber-900 leading-relaxed">
+                        <p className="font-extrabold uppercase text-amber-950 mb-1">🛠️ Cách tích hợp thực tế:</p>
+                        <p>• <b>Đồng bộ dữ liệu thời gian thực:</b> Nâng cấp từ LocalStorage lên cơ sở dữ liệu đám mây <b>Firebase Firestore</b> để mọi người dùng cập nhật trạng thái đơn tức thời (Real-time) không bị trễ.</p>
+                        <p>• <b>Tạo tài khoản riêng:</b> Sử dụng <b>Firebase Authentication</b> để cấp tài khoản Email/Mật khẩu riêng cho từng nhân viên, ghi nhận chính xác ai là người đã nấu, người đóng gói, người giao đơn để hạn chế thất thoát hàng hóa.</p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-3 space-y-2">
+                      <span className="text-[10px] bg-purple-100 px-1.5 py-0.5 rounded font-bold text-purple-800 block w-fit">💡 Hướng Dẫn Trải Nghiệm Demo (Hộp màu vàng chân trang)</span>
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề khung hướng dẫn:</label>
+                        <input 
+                          type="text" 
+                          value={textConfig.demoGuideTitle || ""}
+                          onChange={e => setTextConfig(prev => ({ ...prev, demoGuideTitle: e.target.value }))}
+                          className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold animate-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#394013] mb-1">Nội dung hướng dẫn chi tiết (Hỗ trợ xuống dòng, để trống sẽ ẩn hoàn toàn khung này):</label>
+                        <textarea 
+                          rows={5}
+                          value={textConfig.demoGuideText || ""}
+                          onChange={e => setTextConfig(prev => ({ ...prev, demoGuideText: e.target.value }))}
+                          placeholder="Nếu bạn muốn ẩn khung hướng dẫn màu vàng ở trang chủ khi gửi cho khách, chỉ cần xóa sạch toàn bộ nội dung trong ô này!"
+                          className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Customizable Operational Guide Fields */}
+                    <div className="border-t border-gray-100 pt-3 space-y-3">
+                      <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded font-bold text-amber-800 block w-fit">📖 Tùy Chỉnh Cẩm Nang Vận Hành Chi Tiết (Nút &amp; Nội Dung Modal)</span>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-[#394013] mb-1">Nút mở góc trên (Header):</label>
+                          <input 
+                            type="text" 
+                            value={textConfig.guideBtnText || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideBtnText: e.target.value }))}
+                            className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-[#394013] mb-1">Nút lớn màu vàng (Trang chủ):</label>
+                          <input 
+                            type="text" 
+                            value={textConfig.guideBannerBtnText || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideBannerBtnText: e.target.value }))}
+                            className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-[#394013] mb-1">Tiêu đề Modal:</label>
+                          <input 
+                            type="text" 
+                            value={textConfig.guideModalTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideModalTitle: e.target.value }))}
+                            className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Customer Tab Customization */}
+                      <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
+                        <span className="text-[10px] font-extrabold text-[#00523b]">🍛 Tab KHÁCH HÀNG:</span>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề Concept:</label>
+                          <input 
+                            type="text" 
+                            value={textConfig.guideCustTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideCustTitle: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả ngắn Concept:</label>
+                          <textarea 
+                            rows={2}
+                            value={textConfig.guideCustDesc || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideCustDesc: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Các bước hướng dẫn chi tiết:</label>
+                          <textarea 
+                            rows={4}
+                            value={textConfig.guideCustSteps || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideCustSteps: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Admin Tab Customization */}
+                      <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
+                        <span className="text-[10px] font-extrabold text-amber-700">⚙️ Tab ADMIN:</span>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề chính:</label>
+                          <input 
+                            type="text" 
+                            value={textConfig.guideAdminTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideAdminTitle: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả lưu ý:</label>
+                          <textarea 
+                            rows={2}
+                            value={textConfig.guideAdminDesc || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideAdminDesc: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Nhiệm vụ trọng tâm của Admin:</label>
+                          <textarea 
+                            rows={4}
+                            value={textConfig.guideAdminSteps || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideAdminSteps: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Kitchen Tab Customization */}
+                      <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
+                        <span className="text-[10px] font-extrabold text-teal-700">👨‍🍳 Tab TỔ BẾP:</span>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề chính:</label>
+                          <input 
+                            type="text" 
+                            value={textConfig.guideKitchenTitle || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenTitle: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả lưu ý:</label>
+                          <textarea 
+                            rows={2}
+                            value={textConfig.guideKitchenDesc || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenDesc: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Nội dung hướng dẫn chi tiết:</label>
+                          <textarea 
+                            rows={4}
+                            value={textConfig.guideKitchenSteps || ""}
+                            onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenSteps: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      saveTextConfig(textConfig);
+                      triggerRefresh();
+                      alert("🎉 Đã cập nhật và lưu toàn bộ tiêu đề, logo & các chi tiết giao diện thành công!");
+                    }}
+                    className="w-full py-4 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-black rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    Lưu Toàn Bộ Cấu Hình 💾
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1846,657 +2646,10 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
 
           {/* ======================= CHỈNH SỬA TIÊU ĐỀ & CÂU CHỮ ======================= */}
           <div className="bg-[#fcfef1] p-4 rounded-xl border border-[#00523b]/10 shadow-sm space-y-4">
-            <h4 className="font-extrabold text-sm text-[#00523b] flex items-center gap-1.5 uppercase tracking-wider">
-              ✍️ Tùy Biến Giao Diện & Ảnh/Logo Khách Hàng
-            </h4>
             <p className="text-xs text-[#394013]/80 leading-relaxed font-medium">
-              Bạn có thể dễ dàng thay đổi tên thương hiệu, slogan, tải lên URL logo mới, đổi emoji, hoặc chỉnh sửa nội dung giới thiệu mà khách hàng sẽ thấy. Chỉ có Admin sau khi đăng nhập mới có quyền thay đổi các cài đặt này!
+              Cài đặt câu chữ và giao diện đã được chuyển sang tab <b>Giao diện</b> 🖼️ để quản lý tập trung và khoa học hơn. Hãy sử dụng tab Giao diện ở menu trên để chỉnh sửa các thông tin này!
             </p>
 
-            <div className="space-y-4 pt-1">
-              {/* PHẦN 1: THƯƠNG HIỆU & LOGO */}
-              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
-                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  📌 Thương hiệu & Logo hình ảnh
-                </h5>
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên ứng dụng chính (VD: PaPiMeal):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.appName}
-                    onChange={e => setTextConfig(prev => ({ ...prev, appName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Slogan hiển thị (VD: Cơm Trưa Ngày Mai):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.slogan}
-                    onChange={e => setTextConfig(prev => ({ ...prev, slogan: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Logo góc trên bên trái (Nhập emoji hoặc link ảnh):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.headerLogo}
-                    onChange={e => setTextConfig(prev => ({ ...prev, headerLogo: e.target.value }))}
-                    placeholder="Nhập chữ, emoji hoặc link hình ảnh (http...)"
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
-                  />
-                  <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Ví dụ: <code className="bg-gray-100 px-1 rounded">P</code> hoặc link ảnh <code className="bg-gray-100 px-1 rounded">https://ten-mien.com/logo.png</code></span>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Logo tròn chính giữa trang chủ (Nhập emoji hoặc link ảnh):</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={textConfig.homeRoundLogo}
-                      onChange={e => setTextConfig(prev => ({ ...prev, homeRoundLogo: e.target.value }))}
-                      placeholder="Nhập emoji hoặc link hình ảnh (http...)"
-                      className="flex-1 px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTextConfig(prev => ({ ...prev, homeRoundLogo: "/src/assets/images/papimeal_logo_1782435524190.jpg" }));
-                        alert("🎉 Đã chọn logo Bento PaPiMeal 🍱 mẫu! Hãy bấm nút [Lưu Toàn Bộ Cấu Hình 💾] ở bên dưới cùng để áp dụng nhé!");
-                      }}
-                      className="px-2.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] transition cursor-pointer shrink-0"
-                    >
-                      Sử dụng Logo PaPiMeal 🍱
-                    </button>
-                  </div>
-                  <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Bạn có thể dán link ảnh tùy ý, hoặc bấm nút màu cam ở trên để sử dụng ngay bức ảnh Logo Bento PaPiMeal 🍱 sắc nét được thiết kế riêng!</span>
-                </div>
-              </div>
-
-              {/* PHẦN 2: BANNER TRANG CHỦ */}
-              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
-                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  🎨 Banner Quảng Cáo & Khẩu hiệu chính
-                </h5>
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Banner Trang Chủ:</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.homeBannerTitle}
-                    onChange={e => setTextConfig(prev => ({ ...prev, homeBannerTitle: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Mô tả Banner Trang Chủ:</label>
-                  <textarea 
-                    rows={2}
-                    value={textConfig.homeBannerSubtitle}
-                    onChange={e => setTextConfig(prev => ({ ...prev, homeBannerSubtitle: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Hình nền / Icon mờ góc Banner (Nhập emoji hoặc link ảnh):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.homeBannerImage}
-                    onChange={e => setTextConfig(prev => ({ ...prev, homeBannerImage: e.target.value }))}
-                    placeholder="Ví dụ: 🥗 hoặc link hình ảnh"
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* PHẦN 3: 3 KHỐI LỢI ÍCH TRANG CHỦ */}
-              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-4">
-                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  ⭐ 3 Khối Lợi Ích & Cam Kết (Trang chủ khách hàng)
-                </h5>
-
-                {/* Khối 1 */}
-                <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
-                  <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 1</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-1">
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
-                      <input 
-                        type="text"
-                        value={textConfig.valueProp1Icon}
-                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Icon: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
-                      <input 
-                        type="text"
-                        value={textConfig.valueProp1Title}
-                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Title: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
-                    <input 
-                      type="text"
-                      value={textConfig.valueProp1Desc}
-                      onChange={e => setTextConfig(prev => ({ ...prev, valueProp1Desc: e.target.value }))}
-                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Khối 2 */}
-                <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
-                  <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 2</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-1">
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
-                      <input 
-                        type="text"
-                        value={textConfig.valueProp2Icon}
-                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Icon: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
-                      <input 
-                        type="text"
-                        value={textConfig.valueProp2Title}
-                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Title: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
-                    <input 
-                      type="text"
-                      value={textConfig.valueProp2Desc}
-                      onChange={e => setTextConfig(prev => ({ ...prev, valueProp2Desc: e.target.value }))}
-                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Khối 3 */}
-                <div className="p-2.5 bg-gray-50 rounded-lg space-y-2">
-                  <span className="text-[10px] bg-gray-200 px-1.5 py-0.5 rounded font-bold text-gray-700">Khối lợi ích 3</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-1">
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Icon / Link ảnh</label>
-                      <input 
-                        type="text"
-                        value={textConfig.valueProp3Icon}
-                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Icon: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-mono"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tiêu đề chính</label>
-                      <input 
-                        type="text"
-                        value={textConfig.valueProp3Title}
-                        onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Title: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả ngắn gọn</label>
-                    <input 
-                      type="text"
-                      value={textConfig.valueProp3Desc}
-                      onChange={e => setTextConfig(prev => ({ ...prev, valueProp3Desc: e.target.value }))}
-                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* PHẦN 4: THÔNG BÁO & QUY TRÌNH */}
-              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
-                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  💬 Quy trình đặt, Thông báo, Nút nhấn & Liên hệ
-                </h5>
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước 1 (Chọn lượng & Hẹn giờ):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.step1Title}
-                    onChange={e => setTextConfig(prev => ({ ...prev, step1Title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước 1 (Giải thích khẩu phần):</label>
-                  <textarea 
-                    rows={2}
-                    value={textConfig.step1Sub}
-                    onChange={e => setTextConfig(prev => ({ ...prev, step1Sub: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
-                  />
-                </div>
-
-                {/* Bước 2 */}
-                <div className="border-t border-gray-100 pt-3">
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước 2 (Chọn món theo phần):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.step2Title}
-                    onChange={e => setTextConfig(prev => ({ ...prev, step2Title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước 2 (Mô tả chọn món):</label>
-                  <textarea 
-                    rows={2}
-                    value={textConfig.step2Sub}
-                    onChange={e => setTextConfig(prev => ({ ...prev, step2Sub: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
-                  />
-                </div>
-
-                {/* Xác nhận */}
-                <div className="border-t border-gray-100 pt-3">
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề Bước Xác nhận hóa đơn:</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.confirmTitle}
-                    onChange={e => setTextConfig(prev => ({ ...prev, confirmTitle: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Phụ đề Bước Xác nhận hóa đơn:</label>
-                  <textarea 
-                    rows={2}
-                    value={textConfig.confirmSub}
-                    onChange={e => setTextConfig(prev => ({ ...prev, confirmSub: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
-                  />
-                </div>
-
-                {/* Các nút bấm */}
-                <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên nút đặt món chính:</label>
-                    <input 
-                      type="text" 
-                      value={textConfig.startOrderBtn}
-                      onChange={e => setTextConfig(prev => ({ ...prev, startOrderBtn: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên nút quay lại trang chủ:</label>
-                    <input 
-                      type="text" 
-                      value={textConfig.homeBackBtn}
-                      onChange={e => setTextConfig(prev => ({ ...prev, homeBackBtn: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Địa chỉ & Điện thoại */}
-                <div className="border-t border-gray-100 pt-3">
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Địa chỉ bếp (Hiện khi chọn Ghé lấy):</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.shopAddress}
-                    onChange={e => setTextConfig(prev => ({ ...prev, shopAddress: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Điện thoại liên hệ của bếp:</label>
-                  <input 
-                    type="text" 
-                    value={textConfig.shopPhone}
-                    onChange={e => setTextConfig(prev => ({ ...prev, shopPhone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium animate-none"
-                  />
-                </div>
-
-                <div className="border-t border-gray-100 pt-3">
-                  <label className="block text-[11px] font-bold text-[#394013] mb-1">Thông báo khi khách Đặt đơn Thành Công:</label>
-                  <textarea 
-                    rows={2}
-                    value={textConfig.successMessage}
-                    onChange={e => setTextConfig(prev => ({ ...prev, successMessage: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* PHẦN 5: VAI TRÒ & HƯỚNG DẪN DEMO */}
-              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-4">
-                <h5 className="text-xs font-black text-[#00523b] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  🍀 Tùy chỉnh Các Vai Trò & Hướng dẫn Demo ở Trang Chủ
-                </h5>
-                
-                <div className="p-2.5 bg-emerald-50/50 rounded-lg space-y-3">
-                  <span className="text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold text-emerald-800">1. Vai trò "Khách Hàng"</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleCustomerTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleCustomerTitle: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleCustomerSub || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleCustomerSub: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-2.5 bg-amber-50/50 rounded-lg space-y-3">
-                  <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded font-bold text-amber-800">2. Vai trò "Tra Cứu Đơn"</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleTrackingTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleTrackingTitle: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleTrackingSub || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleTrackingSub: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-2.5 bg-teal-50/50 rounded-lg space-y-3">
-                  <span className="text-[10px] bg-teal-100 px-1.5 py-0.5 rounded font-bold text-teal-800">3. Vai trò "Màn Hình Bếp"</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleKitchenTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleKitchenTitle: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleKitchenSub || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleKitchenSub: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-2.5 bg-blue-50/50 rounded-lg space-y-3">
-                  <span className="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded font-bold text-blue-800">4. Vai trò "Ban Quản Trị"</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Tên hiển thị</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleAdminTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleAdminTitle: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-bold animate-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-extrabold text-gray-500 mb-0.5">Mô tả phụ</label>
-                      <input 
-                        type="text"
-                        value={textConfig.roleAdminSub || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, roleAdminSub: e.target.value }))}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs outline-none bg-white font-medium animate-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* ======================= GỢI Ý NÂNG CẤP PHÂN QUYỀN VẬN HÀNH BẾP ĐA NGƯỜI DÙNG ======================= */}
-                <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 space-y-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="p-1 bg-amber-500 text-white rounded font-bold text-[10px] animate-pulse">✨ GỢI Ý NÂNG CẤP ĐA NGƯỜI DÙNG</span>
-                  </div>
-                  <h6 className="text-[11px] font-extrabold text-amber-900 leading-tight">
-                    Mô Hình Vận Hành Phân Quyền Giữa Bếp, Nhân Viên Đóng Gói (Packer) & Shipper
-                  </h6>
-                  <p className="text-[10px] text-amber-800/90 leading-relaxed">
-                    Khi quy mô của <b>Cơm Niêu PaPi</b> mở rộng, bạn sẽ có nhiều người sử dụng chung hệ thống cùng lúc. Đây là sơ đồ thiết kế đề xuất để tối ưu hóa quy trình đóng gói & giao hàng không sai sót:
-                  </p>
-                  
-                  <div className="space-y-2 pt-1 border-t border-amber-200/50">
-                    <div className="flex items-start gap-1.5 text-[10px]">
-                      <span className="text-amber-600 shrink-0 mt-0.5">👨‍🍳</span>
-                      <div>
-                        <strong className="text-amber-950 block">1. Vai Trò Bộ Phận Bếp (Kitchen Admin):</strong>
-                        <span className="text-amber-800/80">Chỉ xem danh sách món ăn cần nấu tổng hợp theo ngày (Màn hình Chế biến). Khi nấu xong món nào, đầu bếp nhấn <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Hoàn tất nấu"</span>, trạng thái món lập tức chuyển sang chờ đóng gói.</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-1.5 text-[10px]">
-                      <span className="text-amber-600 shrink-0 mt-0.5">📦</span>
-                      <div>
-                        <strong className="text-amber-950 block">2. Vai Trò Nhân Viên Xếp Đơn & Đóng Gói (Packer):</strong>
-                        <span className="text-amber-800/80">Sử dụng màn hình riêng để quét mã đơn hoặc xem danh sách các đơn đã chuẩn bị đầy đủ món. Packer xếp bento vào túi kèm hóa đơn, gạt trạng thái đơn sang <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Đã đóng gói - Chờ giao"</span>.</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-1.5 text-[10px]">
-                      <span className="text-amber-600 shrink-0 mt-0.5">🚴</span>
-                      <div>
-                        <strong className="text-amber-950 block">3. Vai Trò Shipper (Người giao hàng):</strong>
-                        <span className="text-amber-800/80">Truy cập giao diện đơn giản trên điện thoại, chỉ hiển thị danh sách địa chỉ cần giao của hôm nay. Shipper nhận đơn đi giao, cập nhật <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Đang giao"</span> và <span className="bg-amber-100 px-1 rounded font-bold text-amber-900">"Giao thành công"</span> để báo cáo doanh thu tức thời.</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-amber-200/50 bg-amber-500/5 p-2 rounded-lg text-[9px] text-amber-900 leading-relaxed">
-                    <p className="font-extrabold uppercase text-amber-950 mb-1">🛠️ Cách tích hợp thực tế:</p>
-                    <p>• <b>Đồng bộ dữ liệu thời gian thực:</b> Nâng cấp từ LocalStorage lên cơ sở dữ liệu đám mây <b>Firebase Firestore</b> để mọi người dùng cập nhật trạng thái đơn tức thời (Real-time) không bị trễ.</p>
-                    <p>• <b>Tạo tài khoản riêng:</b> Sử dụng <b>Firebase Authentication</b> để cấp tài khoản Email/Mật khẩu riêng cho từng nhân viên, ghi nhận chính xác ai là người đã nấu, người đóng gói, người giao đơn để hạn chế thất thoát hàng hóa.</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-100 pt-3 space-y-2">
-                  <span className="text-[10px] bg-purple-100 px-1.5 py-0.5 rounded font-bold text-purple-800 block w-fit">💡 Hướng Dẫn Trải Nghiệm Demo (Hộp màu vàng chân trang)</span>
-                  <div>
-                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Tiêu đề khung hướng dẫn:</label>
-                    <input 
-                      type="text" 
-                      value={textConfig.demoGuideTitle || ""}
-                      onChange={e => setTextConfig(prev => ({ ...prev, demoGuideTitle: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold animate-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-[#394013] mb-1">Nội dung hướng dẫn chi tiết (Hỗ trợ xuống dòng, để trống sẽ ẩn hoàn toàn khung này):</label>
-                    <textarea 
-                      rows={5}
-                      value={textConfig.demoGuideText || ""}
-                      onChange={e => setTextConfig(prev => ({ ...prev, demoGuideText: e.target.value }))}
-                      placeholder="Nếu bạn muốn ẩn khung hướng dẫn màu vàng ở trang chủ khi gửi cho khách, chỉ cần xóa sạch toàn bộ nội dung trong ô này!"
-                      className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Customizable Operational Guide Fields */}
-                <div className="border-t border-gray-100 pt-3 space-y-3">
-                  <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded font-bold text-amber-800 block w-fit">📖 Tùy Chỉnh Cẩm Nang Vận Hành Chi Tiết (Nút & Nội Dung Modal)</span>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#394013] mb-1">Nút mở góc trên (Header):</label>
-                      <input 
-                        type="text" 
-                        value={textConfig.guideBtnText || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideBtnText: e.target.value }))}
-                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#394013] mb-1">Nút lớn màu vàng (Trang chủ):</label>
-                      <input 
-                        type="text" 
-                        value={textConfig.guideBannerBtnText || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideBannerBtnText: e.target.value }))}
-                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#394013] mb-1">Tiêu đề Modal:</label>
-                      <input 
-                        type="text" 
-                        value={textConfig.guideModalTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideModalTitle: e.target.value }))}
-                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Customer Tab Customization */}
-                  <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#00523b]">🍛 Tab KHÁCH HÀNG:</span>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề Concept:</label>
-                      <input 
-                        type="text" 
-                        value={textConfig.guideCustTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideCustTitle: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả ngắn Concept:</label>
-                      <textarea 
-                        rows={2}
-                        value={textConfig.guideCustDesc || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideCustDesc: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Các bước hướng dẫn chi tiết:</label>
-                      <textarea 
-                        rows={4}
-                        value={textConfig.guideCustSteps || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideCustSteps: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Admin Tab Customization */}
-                  <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
-                    <span className="text-[10px] font-extrabold text-amber-700">⚙️ Tab ADMIN:</span>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề chính:</label>
-                      <input 
-                        type="text" 
-                        value={textConfig.guideAdminTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideAdminTitle: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả lưu ý:</label>
-                      <textarea 
-                        rows={2}
-                        value={textConfig.guideAdminDesc || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideAdminDesc: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Nhiệm vụ trọng tâm của Admin:</label>
-                      <textarea 
-                        rows={4}
-                        value={textConfig.guideAdminSteps || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideAdminSteps: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Kitchen Tab Customization */}
-                  <div className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 space-y-2">
-                    <span className="text-[10px] font-extrabold text-teal-700">👨‍🍳 Tab TỔ BẾP:</span>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Tiêu đề chính:</label>
-                      <input 
-                        type="text" 
-                        value={textConfig.guideKitchenTitle || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenTitle: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Mô tả lưu ý:</label>
-                      <textarea 
-                        rows={2}
-                        value={textConfig.guideKitchenDesc || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenDesc: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-gray-500 mb-0.5">Nội dung hướng dẫn chi tiết:</label>
-                      <textarea 
-                        rows={4}
-                        value={textConfig.guideKitchenSteps || ""}
-                        onChange={e => setTextConfig(prev => ({ ...prev, guideKitchenSteps: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 border border-gray-200 focus:border-[#00523b] rounded-lg text-xs outline-none bg-white font-medium"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  saveTextConfig(textConfig);
-                  triggerRefresh();
-                  alert("🎉 Đã cập nhật và lưu toàn bộ tiêu đề, logo & các chi tiết giao diện thành công!");
-                }}
-                className="w-full py-4 bg-[#00523b] hover:bg-[#003d2b] text-[#fffbd8] font-black rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2"
-              >
-                Lưu Toàn Bộ Cấu Hình 💾
-              </button>
-            </div>
           </div>
 
           {/* Guide section */}
