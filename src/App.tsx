@@ -434,33 +434,35 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Tab selector */}
-              <div className="flex bg-[#00523b]/5 p-1 border-b border-gray-100 shrink-0">
-                <button
-                  onClick={() => setGuideTab('customer')}
-                  className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    guideTab === 'customer' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:text-[#394013]"
-                  }`}
-                >
-                  🍛 Khách Hàng
-                </button>
-                <button
-                  onClick={() => setGuideTab('admin')}
-                  className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    guideTab === 'admin' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:text-[#394013]"
-                  }`}
-                >
-                  ⚙️ Admin
-                </button>
-                <button
-                  onClick={() => setGuideTab('kitchen')}
-                  className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    guideTab === 'kitchen' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:text-[#394013]"
-                  }`}
-                >
-                  👨‍🍳 Tổ Bếp
-                </button>
-              </div>
+              {/* Tab selector - Only show for staff so customers don't see other roles */}
+              {portal === 'staff' && (
+                <div className="flex bg-[#00523b]/5 p-1 border-b border-gray-100 shrink-0">
+                  <button
+                    onClick={() => setGuideTab('customer')}
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      guideTab === 'customer' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:text-[#394013]"
+                    }`}
+                  >
+                    🍛 Khách Hàng
+                  </button>
+                  <button
+                    onClick={() => setGuideTab('admin')}
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      guideTab === 'admin' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:text-[#394013]"
+                    }`}
+                  >
+                    ⚙️ Admin
+                  </button>
+                  <button
+                    onClick={() => setGuideTab('kitchen')}
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      guideTab === 'kitchen' ? "bg-[#00523b] text-[#fffbd8] shadow" : "text-[#394013]/70 hover:text-[#394013]"
+                    }`}
+                  >
+                    👨‍🍳 Tổ Bếp
+                  </button>
+                </div>
+              )}
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs leading-relaxed text-gray-700">
