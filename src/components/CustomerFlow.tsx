@@ -308,7 +308,7 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
               {textConfig.appName}
             </h2>
             <p className="text-sm text-[#394013]/80 italic font-medium max-w-sm">
-              &ldquo;{textConfig.slogan}&rdquo;
+              {textConfig.slogan}
             </p>
           </motion.div>
 

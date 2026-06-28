@@ -3,6 +3,7 @@ import { syncConfigToFirestore } from "./firebaseSync";
 const CONFIG_KEYS = {
   APP_NAME: "papimeal_cfg_app_name",
   SLOGAN: "papimeal_cfg_slogan",
+  BANNER_SLOGAN: "papimeal_cfg_banner_slogan",
   HOME_BANNER_TITLE: "papimeal_cfg_home_banner_title",
   HOME_BANNER_SUBTITLE: "papimeal_cfg_home_banner_subtitle",
   SUCCESS_MESSAGE: "papimeal_cfg_success_message",
@@ -55,6 +56,7 @@ const CONFIG_KEYS = {
 export interface AppTextConfig {
   appName: string;
   slogan: string;
+  bannerSlogan: string;
   homeBannerTitle: string;
   homeBannerSubtitle: string;
   successMessage: string;
@@ -117,6 +119,7 @@ export function loadTextConfig(): AppTextConfig {
   return {
     appName: localStorage.getItem(CONFIG_KEYS.APP_NAME) || "PaPi(ml)",
     slogan: localStorage.getItem(CONFIG_KEYS.SLOGAN) || "Cơm Trưa Ngày Mai",
+    bannerSlogan: localStorage.getItem(CONFIG_KEYS.BANNER_SLOGAN) || "Cơm Trưa Ngày Mai",
     homeBannerTitle: localStorage.getItem(CONFIG_KEYS.HOME_BANNER_TITLE) || "Giải Pháp Ăn Trưa Thông Minh Cho Bạn",
     homeBannerSubtitle: localStorage.getItem(CONFIG_KEYS.HOME_BANNER_SUBTITLE) || "Đặt cơm tách biệt từng khẩu phần cho nhóm bạn, tự động thống kê đi chợ và nấu ăn.",
     successMessage: localStorage.getItem(CONFIG_KEYS.SUCCESS_MESSAGE) || "Đơn hàng của bạn đã gửi đến nhà bếp thành công! Chúc bạn có một bữa ăn ngon miệng.",
@@ -170,6 +173,7 @@ export function loadTextConfig(): AppTextConfig {
 export function saveTextConfig(config: AppTextConfig) {
   localStorage.setItem(CONFIG_KEYS.APP_NAME, config.appName.trim());
   localStorage.setItem(CONFIG_KEYS.SLOGAN, config.slogan.trim());
+  localStorage.setItem(CONFIG_KEYS.BANNER_SLOGAN, (config.bannerSlogan || "").trim());
   localStorage.setItem(CONFIG_KEYS.HOME_BANNER_TITLE, config.homeBannerTitle.trim());
   localStorage.setItem(CONFIG_KEYS.HOME_BANNER_SUBTITLE, config.homeBannerSubtitle.trim());
   localStorage.setItem(CONFIG_KEYS.SUCCESS_MESSAGE, config.successMessage.trim());

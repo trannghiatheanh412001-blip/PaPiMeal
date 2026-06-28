@@ -43,7 +43,8 @@
         "papimeal_cfg_role_admin_title": { "type": "string" },
         "papimeal_cfg_role_admin_sub": { "type": "string" },
         "papimeal_cfg_demo_guide_title": { "type": "string" },
-        "papimeal_cfg_demo_guide_text": { "type": "string" }
+        "papimeal_cfg_demo_guide_text": { "type": "string" },
+        "papimeal_cfg_banner_slogan": { "type": "string" }
       }
     },
     "Product": {

@@ -122,6 +122,7 @@ export function initFirebaseSync(onUpdate: () => void) {
         "papimeal_admin_email": localStorage.getItem("papimeal_admin_email") || "",
         "papimeal_cfg_app_name": "PaPi(ml)",
         "papimeal_cfg_slogan": "Cơm Trưa Ngày Mai",
+        "papimeal_cfg_banner_slogan": "Cơm Trưa Ngày Mai",
         "papimeal_cfg_home_banner_title": "Giải Pháp Ăn Trưa Thông Minh Cho Bạn",
         "papimeal_cfg_home_banner_subtitle": "Đặt cơm tách biệt từng khẩu phần cho nhóm bạn, tự động thống kê đi chợ và nấu ăn.",
         "papimeal_cfg_success_message": "Đơn hàng của bạn đã gửi đến nhà bếp thành công! Chúc bạn có một bữa ăn ngon miệng.",

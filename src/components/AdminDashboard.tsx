@@ -235,6 +235,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         logs: localStorage.getItem("papimeal_logs") || "[]",
         appName: localStorage.getItem("papimeal_cfg_app_name") || "",
         slogan: localStorage.getItem("papimeal_cfg_slogan") || "",
+        bannerSlogan: localStorage.getItem("papimeal_cfg_banner_slogan") || "",
         homeBannerTitle: localStorage.getItem("papimeal_cfg_home_banner_title") || "",
         homeBannerSubtitle: localStorage.getItem("papimeal_cfg_home_banner_subtitle") || "",
         successMessage: localStorage.getItem("papimeal_cfg_success_message") || "",
@@ -318,6 +319,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
         const keysMap: { [key: string]: string } = {
           appName: "papimeal_cfg_app_name",
           slogan: "papimeal_cfg_slogan",
+          bannerSlogan: "papimeal_cfg_banner_slogan",
           homeBannerTitle: "papimeal_cfg_home_banner_title",
           homeBannerSubtitle: "papimeal_cfg_home_banner_subtitle",
           successMessage: "papimeal_cfg_success_message",
@@ -1320,12 +1322,22 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Slogan hiển thị (VD: Cơm Trưa Ngày Mai):</label>
+                     <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Slogan của Logo (góc trên trái & trang chủ - VD: /'ba:.bi mju:/):</label>
                       <input 
                         type="text" 
                         value={textConfig.slogan}
                         onChange={e => setTextConfig(prev => ({ ...prev, slogan: e.target.value }))}
+                        className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Slogan của Banner Trang chủ (VD: Cơm Trưa Ngày Mai):</label>
+                      <input 
+                        type="text" 
+                        value={textConfig.bannerSlogan}
+                        onChange={e => setTextConfig(prev => ({ ...prev, bannerSlogan: e.target.value }))}
                         className="w-full px-3 py-2 border border-[#00523b]/20 focus:border-[#00523b] rounded-xl text-xs outline-none bg-white font-medium"
                       />
                     </div>
