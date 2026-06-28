@@ -828,7 +828,7 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
                     📦 Bao bì &amp; Hộp giấy đóng gói:
                   </span>
                   <div className="flex justify-between font-extrabold text-[#394013] text-sm">
-                    <span>Hộp giấy PaPiMeal đóng cơm:</span>
+                    <span>Hộp giấy PaPi(ml) đóng cơm:</span>
                     <span className="text-teal-900 text-base font-black">{summaryData.totalPortionsCount} chiếc</span>
                   </div>
                   <p className="text-[10px] text-teal-700/80 font-medium">

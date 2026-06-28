@@ -273,7 +273,7 @@ export const APPS_SCRIPT_TEMPLATE = `/**
  * 4. Nhấn Lưu và chọn Triển khai (Deploy) -> Triển khai mới (New Deployment).
  * 5. Chọn loại triển khai là "Ứng dụng web" (Web App).
  * 6. Mục "Ai có quyền truy cập" (Who has access) chọn "Bất kỳ ai" (Anyone).
- * 7. Nhấn Triển khai, cấp quyền truy cập tài khoản, và COPY URL Triển khai dán vào Website Quản trị PaPiMeal!
+ * 7. Nhấn Triển khai, cấp quyền truy cập tài khoản, và COPY URL Triển khai dán vào Website Quản trị PaPi(ml)!
  */
 
 function doPost(e) {
@@ -305,7 +305,7 @@ function doPost(e) {
           // Định dạng dòng tiêu đề (Dòng 1)
           var headerRange = sheet.getRange(1, 1, 1, colCount);
           headerRange.setFontWeight("bold")
-                     .setBackground("#00523b") // Màu xanh đậm thương hiệu PaPiMeal
+                     .setBackground("#00523b") // Màu xanh đậm thương hiệu PaPi(ml)
                      .setFontColor("#ffffff")
                      .setHorizontalAlignment("center")
                      .setVerticalAlignment("middle");
@@ -329,7 +329,7 @@ function doPost(e) {
         var htmlBody = 
           "<div style='font-family: Arial, Helvetica, sans-serif; max-width: 600px; border: 1.5px solid #00523b; border-radius: 16px; padding: 24px; background-color: #fcfef1; color: #394013;'>" +
           "<div style='text-align: center; border-bottom: 2.5px solid #00523b; padding-bottom: 16px; margin-bottom: 20px;'>" +
-          "  <h1 style='color: #00523b; margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;'>🍱 PAPIMEAL - CƠM TRƯA NGÀY MAI</h1>" +
+          "  <h1 style='color: #00523b; margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;'>🍱 PAPI(ML) - CƠM TRƯA NGÀY MAI</h1>" +
           "  <p style='margin: 4px 0 0 0; font-size: 13px; font-weight: bold; color: #394013/80; text-transform: uppercase;'>Đã nhận đơn hàng mới thành công!</p>" +
           "</div>" +
           "<p style='font-size: 15px;'>Chào Mẹ, website vừa ghi nhận một đơn hàng mới từ Khách Hàng. Thông tin cụ thể như sau:</p>" +
@@ -354,7 +354,7 @@ function doPost(e) {
           "<p style='margin-top: 16px; font-size: 13.5px;'><b>Ghi chú của khách hàng:</b> <i>" + (data.notes || "Không có ghi chú thêm") + "</i></p>" +
           
           "<div style='margin-top: 28px; border-top: 1.5px dashed #00523b/20; padding-top: 14px; text-align: center;'>" +
-          "  <p style='color: #394013/60; font-size: 11.5px; margin: 0;'>Đây là email tự động từ hệ thống đồng bộ hóa PaPiMeal. Vui lòng truy cập trang Quản Trị để duyệt đơn hàng.</p>" +
+          "  <p style='color: #394013/60; font-size: 11.5px; margin: 0;'>Đây là email tự động từ hệ thống đồng bộ hóa PaPi(ml). Vui lòng truy cập trang Quản Trị để duyệt đơn hàng.</p>" +
           "  <p style='color: #00523b; font-size: 12px; font-weight: bold; margin-top: 4px;'>Chúc Mẹ một ngày nấu nướng vui vẻ & hanh thông! 🌸</p>" +
           "</div>" +
           "</div>";

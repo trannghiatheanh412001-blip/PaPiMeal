@@ -638,6 +638,166 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
     triggerRefresh();
   };
 
+  // Print order receipt
+  const handlePrintOrder = (order: Order) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    const portionItemsHtml = order.portions.map((portion, pIdx) => {
+      const portTotal = portion.reduce((s, it) => s + it.qty * it.price, 0);
+      const itemsList = portion.map(item => {
+        const prod = products.find(p => p.id === item.id);
+        const cat = prod ? categories.find(c => c.id === prod.category) : undefined;
+        const catName = cat ? cat.name : item.categoryName || "";
+        return `
+          <tr style="border-bottom: 1px dashed #eee;">
+            <td style="padding: 6px 0; vertical-align: top; text-align: left;">
+              <div style="font-weight: bold; font-size: 13px;">${item.name}</div>
+              ${catName ? `<div style="font-size: 10px; color: #666; font-style: italic; margin-top: 2px;">📂 ${catName}</div>` : ''}
+            </td>
+            <td style="padding: 6px 0; vertical-align: top; text-align: center; font-weight: bold; font-size: 13px;">x${item.qty}</td>
+            <td style="padding: 6px 0; vertical-align: top; text-align: right; font-weight: bold; font-size: 13px;">${(item.price * item.qty).toLocaleString('vi-VN')}đ</td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div style="margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background-color: #fafafa;">
+          <div style="font-weight: bold; font-size: 13px; margin-bottom: 8px; border-bottom: 2px solid #00523b; padding-bottom: 4px; color: #00523b;">
+            📦 Khẩu phần ${pIdx + 1}
+          </div>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid #000; font-size: 11px; color: #555; text-transform: uppercase;">
+                <th style="text-align: left; padding-bottom: 4px;">Món ăn</th>
+                <th style="text-align: center; padding-bottom: 4px; width: 40px;">SL</th>
+                <th style="text-align: right; padding-bottom: 4px; width: 80px;">Cộng</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsList}
+            </tbody>
+          </table>
+          <div style="text-align: right; font-weight: bold; font-size: 13px; margin-top: 8px; color: #00523b;">
+            Cộng phần: ${portTotal.toLocaleString('vi-VN')}đ
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Hóa đơn ${order.id}</title>
+        <style>
+          @page {
+            size: auto;
+            margin: 0mm;
+          }
+          body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 20px;
+            width: 80mm;
+            box-sizing: border-box;
+          }
+          @media print {
+            body {
+              width: 80mm;
+              padding: 5px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px dashed #000; padding-bottom: 12px;">
+          <h1 style="font-size: 18px; margin: 0 0 4px 0; text-transform: uppercase; font-weight: 800; color: #00523b;">
+            ${textConfig.appName || "Cơm Niêu PaPi"}
+          </h1>
+          <p style="margin: 3px 0; font-size: 10px; font-style: italic; color: #555;">
+            ${textConfig.slogan || "Mâm Cơm Việt - Đậm Đà Hương Vị Quê Hương"}
+          </p>
+          ${textConfig.shopPhone ? `<p style="margin: 3px 0; font-size: 11px; font-weight: bold;">📞 Hotline: ${textConfig.shopPhone}</p>` : ''}
+          ${textConfig.shopAddress ? `<p style="margin: 3px 0; font-size: 10px; color: #444; line-height: 1.2;">📍 Đ/c: ${textConfig.shopAddress}</p>` : ''}
+        </div>
+
+        <div style="font-size: 12px; margin-bottom: 15px; border-bottom: 2px dashed #000; padding-bottom: 10px; line-height: 1.45;">
+          <div style="font-weight: 900; font-size: 14px; margin-bottom: 8px; text-align: center; border: 2px solid #000; padding: 4px; border-radius: 4px; background-color: #eee;">
+            PHIẾU THANH TOÁN
+          </div>
+          <div><b>Mã đơn hàng:</b> <span style="font-size: 13px; font-weight: bold; background: #000; color: #fff; padding: 2px 6px; border-radius: 4px;">${order.id}</span></div>
+          <div style="margin-top: 4px;"><b>Khách hàng:</b> <span style="font-weight: bold; font-size: 13px;">${order.customerName}</span></div>
+          <div><b>Điện thoại:</b> <span style="font-weight: bold; font-size: 13px;">${order.phone}</span></div>
+          <div><b>Hẹn nhận:</b> <span style="font-weight: bold; color: #00523b; font-size: 13px;">${order.receiveTime} (${order.session})</span> - ${order.receiveDate}</div>
+          <div><b>Hình thức:</b> <span style="font-weight: bold; background: #eee; padding: 1px 4px; border-radius: 2px;">${order.deliveryMethod}</span></div>
+          ${order.address ? `<div style="margin-top: 2px; line-height: 1.3;"><b>Địa chỉ giao:</b> ${order.address}</div>` : ''}
+          <div style="margin-top: 6px; font-size: 10px; color: #666; text-align: right;"><i>In lúc: ${new Date().toLocaleString('vi-VN')}</i></div>
+        </div>
+
+        <div class="items-area">
+          ${portionItemsHtml}
+        </div>
+
+        ${order.notes ? `
+          <div style="background-color: #fffbeb; border: 1px dashed #d97706; padding: 8px; margin-top: 10px; border-radius: 6px; font-style: italic; font-size: 11.5px; color: #92400e;">
+            <b>✍️ Ghi chú của khách:</b><br/>
+            "${order.notes}"
+          </div>
+        ` : ''}
+
+        <div style="border-top: 2px dashed #000; border-bottom: 2px dashed #000; padding: 10px 0; margin-top: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; font-weight: bold; font-size: 15px;">
+          <span>TỔNG THANH TOÁN:</span>
+          <span style="color: #c2410c; font-size: 16px;">${order.totalAmount.toLocaleString('vi-VN')}đ</span>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; font-size: 11.5px; border-top: 1px dotted #ccc; padding-top: 10px;">
+          <p style="margin: 2px 0; font-weight: bold; font-size: 12px; color: #00523b;">Chúc Quý Khách Ngon Miệng! ❤️</p>
+          <p style="margin: 2px 0; font-size: 10px; color: #666;">Cảm ơn quý khách đã tin tưởng Cơm Niêu PaPi!</p>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() {
+              window.close();
+            }, 1000);
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      try {
+        iframe.contentWindow?.print();
+      } catch (e) {
+        console.error(e);
+      }
+      setTimeout(() => {
+        if (iframe.parentNode) {
+          document.body.removeChild(iframe);
+        }
+      }, 5000);
+    }, 500);
+  };
+
   // Filtered orders list for the tabular date-status view
   const filteredOrders = orders.filter(o => {
     const matchesDate = o.receiveDate === orderFilterDate;
@@ -751,7 +911,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
       <div className="max-w-sm mx-auto space-y-4">
         <div className="text-center py-4">
           <ShieldCheck size={48} className="mx-auto text-[#00523b] mb-2" />
-          <h3 className="text-xl font-extrabold text-[#00523b] font-sans">Bảng Quản Trị PaPiMeal</h3>
+          <h3 className="text-xl font-extrabold text-[#00523b] font-sans">Bảng Quản Trị PaPi(ml)</h3>
           <p className="text-xs text-[#394013]/70 font-medium mt-1">
             Xác thực tài khoản người quản lý hệ thống
           </p>
@@ -1151,7 +1311,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                       📌 Thương hiệu &amp; Logo hình ảnh
                     </h5>
                     <div>
-                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên ứng dụng chính (VD: PaPiMeal):</label>
+                      <label className="block text-[11px] font-bold text-[#394013] mb-1">Tên ứng dụng chính (VD: PaPi(ml)):</label>
                       <input 
                         type="text" 
                         value={textConfig.appName}
@@ -1196,14 +1356,14 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                           type="button"
                           onClick={() => {
                             setTextConfig(prev => ({ ...prev, homeRoundLogo: "/src/assets/images/papimeal_logo_1782435524190.jpg" }));
-                            alert("🎉 Đã chọn logo Bento PaPiMeal 🍱 mẫu! Hãy bấm nút [Lưu Toàn Bộ Cấu Hình 💾] ở bên dưới cùng để áp dụng nhé!");
+                            alert("🎉 Đã chọn logo Bento PaPi(ml) 🍱 mẫu! Hãy bấm nút [Lưu Toàn Bộ Cấu Hình 💾] ở bên dưới cùng để áp dụng nhé!");
                           }}
                           className="px-2.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] transition cursor-pointer shrink-0"
                         >
-                          Sử dụng Logo PaPiMeal 🍱
+                          Sử dụng Logo PaPi(ml) 🍱
                         </button>
                       </div>
-                      <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Bạn có thể dán link ảnh tùy ý, hoặc bấm nút màu cam ở trên để sử dụng ngay bức ảnh Logo Bento PaPiMeal 🍱 sắc nét được thiết kế riêng!</span>
+                      <span className="text-[9px] text-[#394013]/50 font-bold mt-1 block">💡 Bạn có thể dán link ảnh tùy ý, hoặc bấm nút màu cam ở trên để sử dụng ngay bức ảnh Logo Bento PaPi(ml) 🍱 sắc nét được thiết kế riêng!</span>
                     </div>
                   </div>
 
@@ -2077,6 +2237,14 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                         👁️ Chi tiết món
                       </button>
 
+                      <button
+                        onClick={() => handlePrintOrder(order)}
+                        className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
+                        title="In hóa đơn đơn đặt hàng"
+                      >
+                        🖨️ In hóa đơn
+                      </button>
+
                       {canProgress && (
                         <button
                           onClick={() => handleProgressOrderStatus(order.id, order.status)}
@@ -2499,7 +2667,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                         receiveTime: "11:30",
                         session: "Trưa",
                         deliveryMethod: "Giao hàng",
-                        address: "Địa chỉ Thử nghiệm PaPiMeal",
+                        address: "Địa chỉ Thử nghiệm PaPi(ml)",
                         notes: "Đây là đơn thử nghiệm kiểm tra kết nối Google Sheet",
                         status: "Chờ xử lý",
                         portionsCount: 1,
@@ -3203,12 +3371,25 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                     <div key={pIdx} className="bg-[#fffbd8]/10 p-3 rounded-xl border border-[#00523b]/10 space-y-1.5">
                       <span className="font-extrabold text-xs text-[#00523b] block">📦 Khẩu phần {pIdx + 1}</span>
                       <div className="space-y-1">
-                        {portion.map(item => (
-                          <div key={item.id} className="flex justify-between text-xs font-medium">
-                            <span>{item.name} <span className="font-bold text-[#00523b]">x{item.qty}</span></span>
-                            <span>{(item.qty * item.price).toLocaleString("vi-VN")}đ</span>
-                          </div>
-                        ))}
+                        {portion.map(item => {
+                          const prod = products.find(p => p.id === item.id);
+                          const cat = prod ? categories.find(c => c.id === prod.category) : undefined;
+                          const catName = cat ? cat.name : item.categoryName || "";
+                          return (
+                            <div key={item.id} className="flex justify-between items-center text-xs font-medium py-0.5">
+                              <span className="flex items-center gap-1.5 flex-wrap">
+                                <span>{item.name}</span>
+                                {catName && (
+                                  <span className="inline-block text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                                    {catName}
+                                  </span>
+                                )}
+                                <span className="font-bold text-[#00523b]">x{item.qty}</span>
+                              </span>
+                              <span>{(item.qty * item.price).toLocaleString("vi-VN")}đ</span>
+                            </div>
+                          );
+                        })}
                       </div>
                       <div className="pt-1.5 border-t border-dotted border-[#00523b]/10 flex justify-between text-xs font-extrabold text-[#00523b]">
                         <span>Cộng phần này:</span>
@@ -3219,13 +3400,22 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
                 })}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedOrderDetailId(null)}
-                className="w-full py-2.5 bg-[#00523b] text-[#fffbd8] hover:bg-[#003d2b] rounded-lg text-xs font-bold transition cursor-pointer"
-              >
-                Đóng
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePrintOrder(selectedOrderDetails)}
+                  className="flex-1 py-2.5 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                >
+                  🖨️ In hóa đơn
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrderDetailId(null)}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                >
+                  Đóng
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

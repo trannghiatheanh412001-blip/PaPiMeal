@@ -106,7 +106,7 @@ export interface AppTextConfig {
 
 export function loadTextConfig(): AppTextConfig {
   return {
-    appName: localStorage.getItem(CONFIG_KEYS.APP_NAME) || "PaPiMeal",
+    appName: localStorage.getItem(CONFIG_KEYS.APP_NAME) || "PaPi(ml)",
     slogan: localStorage.getItem(CONFIG_KEYS.SLOGAN) || "Cơm Trưa Ngày Mai",
     homeBannerTitle: localStorage.getItem(CONFIG_KEYS.HOME_BANNER_TITLE) || "Giải Pháp Ăn Trưa Thông Minh Cho Bạn",
     homeBannerSubtitle: localStorage.getItem(CONFIG_KEYS.HOME_BANNER_SUBTITLE) || "Đặt cơm tách biệt từng khẩu phần cho nhóm bạn, tự động thống kê đi chợ và nấu ăn.",
@@ -124,7 +124,7 @@ export function loadTextConfig(): AppTextConfig {
     valueProp2Desc: localStorage.getItem(CONFIG_KEYS.VP2_DESC) || "Chốt nguyên liệu tươi ngon lúc 14h00 hàng ngày, tuyệt đối vệ sinh.",
     valueProp3Icon: localStorage.getItem(CONFIG_KEYS.VP3_ICON) || "🚀",
     valueProp3Title: localStorage.getItem(CONFIG_KEYS.VP3_TITLE) || "Tra Cứu Trực Quan Realtime",
-    valueProp3Desc: localStorage.getItem(CONFIG_KEYS.VP3_DESC) || "Xem tiến trình chế biến món ăn từ bếp của PaPiMeal bất cứ lúc nào.",
+    valueProp3Desc: localStorage.getItem(CONFIG_KEYS.VP3_DESC) || "Xem tiến trình chế biến món ăn từ bếp của PaPi(ml) bất cứ lúc nào.",
     shopAddress: localStorage.getItem(CONFIG_KEYS.SHOP_ADDRESS) || "16B Trần Văn Thành, Phường Chánh Hưng, Quận 8",
     shopPhone: localStorage.getItem(CONFIG_KEYS.SHOP_PHONE) || "0901 464 021",
     startOrderBtn: localStorage.getItem(CONFIG_KEYS.START_ORDER_BTN) || "Đặt Món Ngay",
@@ -147,7 +147,7 @@ export function loadTextConfig(): AppTextConfig {
     guideBannerBtnText: localStorage.getItem(CONFIG_KEYS.GUIDE_BANNER_BTN_TEXT) || "📖 Xem Cẩm Nang Vận Hành Chi Tiết 🚀",
     guideModalTitle: localStorage.getItem(CONFIG_KEYS.GUIDE_MODAL_TITLE) || "CẨM NANG VẬN HÀNH CHI TIẾT",
     guideCustTitle: localStorage.getItem(CONFIG_KEYS.GUIDE_CUST_TITLE) || "🍱 Concept: Tự Chọn Món Ăn Theo Gram/ml",
-    guideCustDesc: localStorage.getItem(CONFIG_KEYS.GUIDE_CUST_DESC) || "Khác với cơm hộp truyền thống đóng sẵn, tại **PaPiMeal**, mỗi suất ăn giống như một khay cơm trống được phát riêng. Khách hàng tự do gắp những món yêu thích bỏ vào khay của mình, tính tiền dựa trên trọng lượng chính xác (Gram/ml) được định giá sẵn.",
+    guideCustDesc: localStorage.getItem(CONFIG_KEYS.GUIDE_CUST_DESC) || "Khác với cơm hộp truyền thống đóng sẵn, tại **PaPi(ml)**, mỗi suất ăn giống như một khay cơm trống được phát riêng. Khách hàng tự do gắp những món yêu thích bỏ vào khay của mình, tính tiền dựa trên trọng lượng chính xác (Gram/ml) được định giá sẵn.",
     guideCustSteps: localStorage.getItem(CONFIG_KEYS.GUIDE_CUST_STEPS) || "1. Nhập Thông Tin & Số Lượng Khay trước\nBước đầu tiên, khách hàng sẽ khai báo họ tên, SĐT, ngày và giờ muốn nhận món, chọn hình thức giao hàng/nhận tại quán, ghi chú lưu ý và quan trọng nhất là chọn số lượng khay cơm muốn đặt (Số suất ăn).\n\n2. Lựa Chọn Món Vào Từng Khay Ăn Lẻ\nKhách hàng sẽ tự do định lượng món ăn (tôm rim, khoai tây, cơm trắng, thịt bò...) vào khay đầu tiên. Nếu đi nhóm đông muốn ăn giống hệt nhau: Chỉ cần chọn khay 1, rồi tích chọn \"Áp dụng giống Khẩu phần 1\" để đặt nhanh. Nếu muốn cá nhân hoá: Bấm \"Khẩu phần tiếp theo\" để tự gắp đồ ăn khác nhau cho khay số 2, khay số 3...\n\n3. Xác Nhận Hóa Đơn & Gửi Đơn\nHệ thống tổng hợp và bóc tách chi tiết giá tiền của từng khay cơm riêng biệt để khách dễ dàng cược/chia tiền. Khách bấm gửi đơn và nhận Mã Đơn Hàng duy nhất.\n\n4. Tra Cứu Realtime Live\nNhập SĐT để xem trực quan tiến trình bếp nấu: Chờ xử lý → Đang chuẩn bị → Đang nấu → Đã giao hoàn toàn trực quan!",
     guideAdminTitle: localStorage.getItem(CONFIG_KEYS.GUIDE_ADMIN_TITLE) || "💰 Doanh Thu Thực Tế (Hoàn tất)",
     guideAdminDesc: localStorage.getItem(CONFIG_KEYS.GUIDE_ADMIN_DESC) || "Để tránh lạm phát báo cáo khống, Doanh thu và Lợi nhuận chỉ được cộng dồn khi đơn hàng đạt trạng thái \"Hoàn tất\" (đã giao thành công và nhận tiền). Các đơn mới đặt hoặc đang giao sẽ không được tính làm doanh thu.",

@@ -106,7 +106,7 @@ export function initFirebaseSync(onUpdate: () => void) {
       const defaultConfig: Record<string, string> = {
         "papimeal_google_sheet_url": localStorage.getItem("papimeal_google_sheet_url") || "",
         "papimeal_admin_email": localStorage.getItem("papimeal_admin_email") || "",
-        "papimeal_cfg_app_name": "PaPiMeal",
+        "papimeal_cfg_app_name": "PaPi(ml)",
         "papimeal_cfg_slogan": "Cơm Trưa Ngày Mai",
         "papimeal_cfg_home_banner_title": "Giải Pháp Ăn Trưa Thông Minh Cho Bạn",
         "papimeal_cfg_home_banner_subtitle": "Đặt cơm tách biệt từng khẩu phần cho nhóm bạn, tự động thống kê đi chợ và nấu ăn.",
@@ -124,7 +124,7 @@ export function initFirebaseSync(onUpdate: () => void) {
         "papimeal_cfg_vp2_desc": "Chốt nguyên liệu tươi ngon lúc 14h00 hàng ngày, tuyệt đối vệ sinh.",
         "papimeal_cfg_vp3_icon": "🚀",
         "papimeal_cfg_vp3_title": "Tra Cứu Trực Quan Realtime",
-        "papimeal_cfg_vp3_desc": "Xem tiến trình chế biến món ăn từ bếp của PaPiMeal bất cứ lúc nào.",
+        "papimeal_cfg_vp3_desc": "Xem tiến trình chế biến món ăn từ bếp của PaPi(ml) bất cứ lúc nào.",
         "papimeal_cfg_shop_address": "16B Trần Văn Thành, Phường Chánh Hưng, Quận 8",
         "papimeal_cfg_shop_phone": "0901 464 021",
         "papimeal_cfg_start_order_btn": "Đặt Món Ngay",

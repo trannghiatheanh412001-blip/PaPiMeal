@@ -473,7 +473,7 @@ export default function App() {
                         {textConfig.guideCustTitle || "🍱 Concept: Tự Chọn Món Ăn Theo Gram/ml"}
                       </span>
                       <p className="text-gray-600 whitespace-pre-line">
-                        {textConfig.guideCustDesc || "Khác với cơm hộp truyền thống đóng sẵn, tại **PaPiMeal**, mỗi suất ăn giống như một khay cơm trống được phát riêng. Khách hàng tự do gắp những món yêu thích bỏ vào khay của mình, tính tiền dựa trên trọng lượng chính xác (Gram/ml) được định giá sẵn."}
+                        {textConfig.guideCustDesc || "Khác với cơm hộp truyền thống đóng sẵn, tại **PaPi(ml)**, mỗi suất ăn giống như một khay cơm trống được phát riêng. Khách hàng tự do gắp những món yêu thích bỏ vào khay của mình, tính tiền dựa trên trọng lượng chính xác (Gram/ml) được định giá sẵn."}
                       </p>
                     </div>
 

@@ -151,6 +151,10 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
 
   // Change quantity of a product in the current portion
   const handleQuantityChange = (productId: string, productName: string, price: number, delta: number) => {
+    const prod = products.find(p => p.id === productId);
+    const cat = prod ? categories.find(c => c.id === prod.category) : undefined;
+    const catName = cat ? cat.name : "";
+
     setPortionsSelections(prev => {
       const updated = [...prev];
       const currentPortion = [...updated[currentPortionIndex]];
@@ -162,10 +166,10 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
         if (newQty === 0) {
           currentPortion.splice(existingItemIndex, 1);
         } else {
-          currentPortion[existingItemIndex] = { ...item, qty: newQty };
+          currentPortion[existingItemIndex] = { ...item, qty: newQty, categoryName: catName || item.categoryName };
         }
       } else if (delta > 0) {
-        currentPortion.push({ id: productId, name: productName, price, qty: 1 });
+        currentPortion.push({ id: productId, name: productName, price, qty: 1, categoryName: catName });
       }
 
       updated[currentPortionIndex] = currentPortion;
@@ -501,7 +505,7 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
                   exit={{ opacity: 0, height: 0 }}
                   className="bg-[#00523b]/5 border-l-3 border-[#00523b] p-3 rounded-r-xl text-xs overflow-hidden"
                 >
-                  <span className="font-bold text-[#00523b] block mb-0.5">📍 Địa chỉ bếp PaPiMeal:</span>
+                  <span className="font-bold text-[#00523b] block mb-0.5">📍 Địa chỉ bếp PaPi(ml):</span>
                   <p className="text-[#394013]/80 leading-relaxed font-medium">
                     {textConfig.shopAddress} <br />
                     📞 Điện thoại: <a href={`tel:${textConfig.shopPhone.replace(/\s/g, '')}`} className="font-bold underline hover:text-[#00523b]">{textConfig.shopPhone}</a>
@@ -668,8 +672,11 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
 
                           {/* Info Box */}
                           <div className="flex-1 min-w-0 pr-2">
-                            <h5 className="font-bold text-sm text-[#394013] truncate" title={product.name}>
-                              {product.name}
+                            <h5 className="font-bold text-sm text-[#394013] flex items-center flex-wrap gap-1.5" title={product.name}>
+                              <span>{product.name}</span>
+                              <span className="inline-block text-[9px] bg-[#00523b]/10 text-[#00523b] px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                                {cat.name}
+                              </span>
                             </h5>
                             <p className="text-[10px] text-[#394013]/60 font-medium truncate mt-0.5">
                               {product.description}
@@ -846,16 +853,27 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
                     </div>
 
                     <div className="space-y-1">
-                      {portionItems.map(item => (
-                        <div key={item.id} className="flex justify-between items-center text-xs">
-                          <span className="text-[#394013]/85 font-medium">
-                            {item.name} <span className="font-bold text-[#00523b]">x{item.qty}</span>
-                          </span>
-                          <span className="font-bold text-[#394013]">
-                            {(item.qty * item.price).toLocaleString("vi-VN")}đ
-                          </span>
-                        </div>
-                      ))}
+                      {portionItems.map(item => {
+                        const prod = products.find(p => p.id === item.id);
+                        const cat = prod ? categories.find(c => c.id === prod.category) : undefined;
+                        const catName = cat ? cat.name : item.categoryName || "";
+                        return (
+                          <div key={item.id} className="flex justify-between items-center text-xs py-0.5">
+                            <span className="text-[#394013]/85 font-medium flex items-center gap-1.5 flex-wrap">
+                              <span>{item.name}</span>
+                              {catName && (
+                                <span className="inline-block text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                                  {catName}
+                                </span>
+                              )}
+                              <span className="font-bold text-[#00523b]">x{item.qty}</span>
+                            </span>
+                            <span className="font-bold text-[#394013]">
+                              {(item.qty * item.price).toLocaleString("vi-VN")}đ
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     <div className="pt-2 border-t border-dotted border-[#00523b]/10 flex justify-between text-xs font-bold text-[#00523b]">
@@ -920,22 +938,34 @@ export default function CustomerFlow({ onBackToHome, onOrderSuccess, triggerRefr
                     Bạn chưa chọn món nào cho phần ăn này.
                   </p>
                 ) : (
-                  (portionsSelections[currentPortionIndex] || []).map(item => (
-                    <div 
-                      key={item.id} 
-                      className="bg-white p-3 rounded-xl border border-[#00523b]/5 flex justify-between items-center"
-                    >
-                      <div>
-                        <span className="font-bold text-sm text-[#394013] block">{item.name}</span>
-                        <span className="text-xs text-[#394013]/70 font-semibold mt-1 block">
-                          Số lượng: <span className="text-[#00523b] font-bold">{item.qty}</span> x {item.price.toLocaleString("vi-VN")}đ
+                  (portionsSelections[currentPortionIndex] || []).map(item => {
+                    const prod = products.find(p => p.id === item.id);
+                    const cat = prod ? categories.find(c => c.id === prod.category) : undefined;
+                    const catName = cat ? cat.name : item.categoryName || "";
+                    return (
+                      <div 
+                        key={item.id} 
+                        className="bg-white p-3 rounded-xl border border-[#00523b]/5 flex justify-between items-center"
+                      >
+                        <div>
+                          <span className="font-bold text-sm text-[#394013] flex items-center gap-1.5 flex-wrap">
+                            <span>{item.name}</span>
+                            {catName && (
+                              <span className="inline-block text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                                {catName}
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-xs text-[#394013]/70 font-semibold mt-1 block">
+                            Số lượng: <span className="text-[#00523b] font-bold">{item.qty}</span> x {item.price.toLocaleString("vi-VN")}đ
+                          </span>
+                        </div>
+                        <span className="font-extrabold text-sm text-[#00523b]">
+                          {(item.qty * item.price).toLocaleString("vi-VN")}đ
                         </span>
                       </div>
-                      <span className="font-extrabold text-sm text-[#00523b]">
-                        {(item.qty * item.price).toLocaleString("vi-VN")}đ
-                      </span>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
               <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">

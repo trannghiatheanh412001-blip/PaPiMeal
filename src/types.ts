@@ -29,6 +29,7 @@ export interface PortionItem {
   name: string;
   price: number;
   qty: number;
+  categoryName?: string;
 }
 
 export interface Order {
