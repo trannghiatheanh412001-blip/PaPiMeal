@@ -125,7 +125,7 @@ export default function App() {
               <h1 className="text-lg font-black text-[#00523b] tracking-tight font-sans leading-none">
                 {textConfig.appName}
               </h1>
-              <span className="text-[8px] uppercase tracking-widest text-[#394013]/60 font-black block mt-0.5 leading-none">
+              <span className="text-[9px] tracking-widest text-[#394013]/60 font-black block mt-0.5 leading-none">
                 {textConfig.slogan}
               </span>
             </div>
@@ -184,7 +184,7 @@ export default function App() {
                       textConfig.homeBannerImage
                     )}
                   </div>
-                  <span className="text-[10px] uppercase tracking-widest bg-[#fffbd8]/10 text-[#fffbd8] px-2.5 py-1 rounded-full font-extrabold">
+                  <span className="text-[11px] tracking-widest bg-[#fffbd8]/10 text-[#fffbd8] px-2.5 py-1 rounded-full font-extrabold">
                     {textConfig.slogan}
                   </span>
                   <h2 className="text-xl sm:text-2xl font-extrabold font-sans tracking-tight leading-tight whitespace-pre-line">

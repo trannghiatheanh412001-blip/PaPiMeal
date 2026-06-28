@@ -11,6 +11,7 @@ import {
   loadCategories 
 } from "../utils/storage";
 import { sendToGoogleSheets } from "../utils/googleSheets";
+import { loadTextConfig } from "../utils/textConfig";
 
 interface KitchenDashboardProps {
   onBackToHome: () => void;
@@ -19,6 +20,7 @@ interface KitchenDashboardProps {
 }
 
 export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh }: KitchenDashboardProps) {
+  const textConfig = loadTextConfig();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -87,8 +89,8 @@ export default function KitchenDashboard({ onBackToHome, orders, triggerRefresh 
     
     printContainer.innerHTML = `
       <div style="width: 67%; display: flex; flex-direction: column; justify-content: space-between; height: 100%; overflow: hidden; text-align: left;">
-        <div style="font-size: 8px; font-weight: 900; border-bottom: 0.5px solid black; padding-bottom: 2px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; font-family: sans-serif;">
-          PAPIMEAL - DINH DƯỠNG MỖI NGÀY 🍱
+        <div style="font-size: 8px; font-weight: 900; border-bottom: 0.5px solid black; padding-bottom: 2px; margin-bottom: 2px; letter-spacing: 0.5px; font-family: sans-serif;">
+          ${textConfig.appName} - DINH DƯỠNG MỖI NGÀY 🍱
         </div>
         <div style="font-size: 8px; line-height: 1.1; margin-bottom: 2px; font-family: sans-serif;">
           <strong>KH:</strong> ${order.customerName} - ${order.phone}

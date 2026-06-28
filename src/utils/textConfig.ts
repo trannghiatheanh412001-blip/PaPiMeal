@@ -105,6 +105,15 @@ export interface AppTextConfig {
 }
 
 export function loadTextConfig(): AppTextConfig {
+  // Auto-migrate local storage legacy brand names
+  Object.keys(CONFIG_KEYS).forEach(k => {
+    const key = CONFIG_KEYS[k as keyof typeof CONFIG_KEYS];
+    const val = localStorage.getItem(key);
+    if (val && val.includes("PaPiMeal")) {
+      localStorage.setItem(key, val.replace(/PaPiMeal/g, "PaPi(ml)"));
+    }
+  });
+
   return {
     appName: localStorage.getItem(CONFIG_KEYS.APP_NAME) || "PaPi(ml)",
     slogan: localStorage.getItem(CONFIG_KEYS.SLOGAN) || "Cơm Trưa Ngày Mai",

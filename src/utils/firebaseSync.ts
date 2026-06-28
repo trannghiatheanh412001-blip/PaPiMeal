@@ -95,11 +95,25 @@ export function initFirebaseSync(onUpdate: () => void) {
   onSnapshot(doc(db, "config", "general"), async (snapshot) => {
     if (snapshot.exists()) {
       const data = snapshot.data();
-      Object.entries(data).forEach(([key, val]) => {
-        if (val !== undefined && val !== null) {
+      let hasUpdate = false;
+      const updatedData = { ...data };
+      Object.entries(updatedData).forEach(([key, val]) => {
+        if (typeof val === "string" && val.includes("PaPiMeal")) {
+          const newVal = val.replace(/PaPiMeal/g, "PaPi(ml)");
+          updatedData[key] = newVal;
+          localStorage.setItem(key, newVal);
+          hasUpdate = true;
+        } else if (val !== undefined && val !== null) {
           localStorage.setItem(key, String(val));
         }
       });
+      if (hasUpdate) {
+        try {
+          await setDoc(doc(db, "config", "general"), updatedData);
+        } catch (err) {
+          console.error("Failed to auto-migrate app name in Firestore config:", err);
+        }
+      }
       onUpdate();
     } else {
       // Seed default config

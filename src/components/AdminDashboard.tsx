@@ -723,7 +723,7 @@ export default function AdminDashboard({ onBackToHome, orders, triggerRefresh }:
       </head>
       <body>
         <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px dashed #000; padding-bottom: 12px;">
-          <h1 style="font-size: 18px; margin: 0 0 4px 0; text-transform: uppercase; font-weight: 800; color: #00523b;">
+          <h1 style="font-size: 18px; margin: 0 0 4px 0; font-weight: 800; color: #00523b;">
             ${textConfig.appName || "Cơm Niêu PaPi"}
           </h1>
           <p style="margin: 3px 0; font-size: 10px; font-style: italic; color: #555;">
